@@ -1,0 +1,7 @@
+name: CLI Evaluation 
+api-key: ${OKAREO_API_KEY}
+project-id: 5ff115a2-f4b0-4100-bbde-87a54428add4
+run:
+  scripts:
+    file-pattern: '.*\.py'
+
