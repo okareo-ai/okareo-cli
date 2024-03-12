@@ -28,7 +28,7 @@ A tool for interacting with the Okareo API
 ```
 name: <NAME OF YOUR REPO>
 api-key: ${OKAREO_API_KEY}
-project-id: 5ff115a2-f4b0-4100-bbde-87a54428add4
+project-id: ${OKAREO_PROJECT_ID}
 run:
   scripts:
     file-pattern: '.*\.py'

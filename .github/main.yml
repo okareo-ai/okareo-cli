@@ -1,0 +1,28 @@
+# Used this guide: https://github.com/google-github-actions/auth
+name: Smoke Test CLI
+env:
+  OKAREO_API_KEY: ${{ secrets.OKAREO_API_KEY }}
+  OKAREO_PROJECT_ID: ${{ secrets.OKAREO_PROJECT_ID }}
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+  
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Display Python version
+        run: python -c "import sys; print(sys.version)"
+      
+      - name: Validate Models
+        run: |
+          ./dist/okareo validate --file-pattern '.*\.py'
