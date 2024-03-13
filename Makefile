@@ -6,9 +6,9 @@ GIT_SHA_SHORT := $(shell git rev-parse --short HEAD)
 DATE := $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 VERSION := $(shell git describe --tags)-$(GIT_SHA_SHORT)
 LDFLAGS := -s -w \
-	-X 'github.com/okareo-ai/cli-poc/version.BuildDate=$(DATE)' \
-	-X 'github.com/okareo-ai/cli-poc/version.BuildVersion=$(subst v,,$(VERSION))' \
-	-X 'github.com/okareo-ai/cli-poc/version.Commit=$(GIT_SHA)'
+	-X 'github.com/okareo-ai/okareo-cli/version.BuildDate=$(DATE)' \
+	-X 'github.com/okareo-ai/okareo-cli/version.BuildVersion=$(subst v,,$(VERSION))' \
+	-X 'github.com/okareo-ai/okareo-cli/version.Commit=$(GIT_SHA)'
 
 .PHONY: build
 build:
