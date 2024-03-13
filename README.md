@@ -6,12 +6,12 @@ A tool for interacting with the Okareo API
 
 ## USAGE
 1. Download okareo from dist
-2. Add okareo to your PATH (export PATH=$PATH:/correct/location/to/okareo)
+2. Add okareo to your PATH (export PATH=$PATH:/correct/location/to/okareo-cli)
 3. In your repo, add a .okareo folder
 4. Add .okareo/config.yml
 5. Add your test scripts in .okareo/validations
 
-- .okareo
+- .okareo-cli
     - config.yml
     - validations
         - classification.py
@@ -33,11 +33,3 @@ run:
   scripts:
     file-pattern: '.*\.py'
 ```
-
-## Development
-- install go
-- usgo get cobra-cli
-- go get gopkg.in/yaml.v3
-
-## Build
-go build -o okareo
