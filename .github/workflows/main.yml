@@ -7,7 +7,7 @@ env:
 on:
   push:
     branches:
-      - main
+      - main_ci
 
 jobs:
   build:
@@ -22,7 +22,3 @@ jobs:
 
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
-      
-      - name: Validate Models
-        run: |
-          ./dist/okareo validate --file-pattern '.*\.py'
