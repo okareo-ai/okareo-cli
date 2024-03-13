@@ -23,4 +23,4 @@ go.work
 
 # ignore artifacts of the development environment
 .okareo/install.sh
-
+dist

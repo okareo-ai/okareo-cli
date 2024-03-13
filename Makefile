@@ -12,7 +12,7 @@ LDFLAGS := -s -w \
 
 .PHONY: build
 build:
-	go build -o ./dist/okareo -ldflags="$(LDFLAGS)" main.go
+	go build -o ./dist/okareo-cli -ldflags="$(LDFLAGS)" main.go
 
 .PHONY: test
 test: build

@@ -1,5 +1,5 @@
 /*
-Copyright © 2024 NAME HERE <EMAIL ADDRESS>
+Copyright © 2024 OKAREO oss@okareo.com
 */
 package cmd
 
@@ -37,13 +37,8 @@ func check(e error) {
 
 var runCmd = &cobra.Command{
 	Use:   "validate",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "Okareo CLI command to run validations",
+	Long:  `Okareo CLI command to run validations`,
 	Run: func(cmd *cobra.Command, args []string) {
 		isDebug, _ := cmd.Flags().GetBool("debug")
 		useLatest, _ := cmd.Flags().GetBool("latest")
