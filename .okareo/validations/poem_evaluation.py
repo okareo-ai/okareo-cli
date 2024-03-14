@@ -2,12 +2,19 @@
 
 import os
 import uuid
-import random
-import string
 from okareo import Okareo
 from okareo_api_client.models import ScenarioSetCreate, ScenarioSetResponse, SeedData, ScenarioType
 from okareo.model_under_test import OpenAIModel
 from okareo_api_client.models.test_run_type import TestRunType
+
+import random
+import string
+
+def generate_random_string(length):
+    alphabet = string.ascii_letters + string.digits
+    return ''.join(random.choice(alphabet) for _ in range(length))
+
+random_string = generate_random_string(6)
 
 OKAREO_API_KEY = os.environ["OKAREO_API_KEY"]
 OPENAI_API_KEY = os.environ["OPENAI_API_KEY"]
@@ -107,7 +114,7 @@ It asked a crumb-of Me.
 """
 
 scenario_set_create = ScenarioSetCreate(
-    name=f"{OKAREO_RUN_ID} - Scenario",
+    name=f"Github Action Test ID {OKAREO_RUN_ID} - {random_string} - Scenario",
     number_examples=1,
     generation_type=ScenarioType.SEED,
     seed_data=[
@@ -127,10 +134,10 @@ scenario_set_create = ScenarioSetCreate(
 )
 scenario = okareo.create_scenario_set(scenario_set_create)
 
-print(scenario.additional_properties['app_link'])
+print('Scenario Link: ', scenario.app_link)
 
-mut_name = f"{OKAREO_RUN_ID} - MUT"
-eval_name = f"{OKAREO_RUN_ID} - EVAL"
+mut_name = f"Github Action Test ID {OKAREO_RUN_ID} - {random_string} - MUT"
+eval_name = f"Github Action Test ID {OKAREO_RUN_ID} - {random_string} - EVAL"
 
 model_under_test = okareo.register_model(
     name=mut_name,
@@ -151,4 +158,4 @@ evaluation = model_under_test.run_test(
     calculate_metrics=True,
 )
 
-print(evaluation.additional_properties['app_link'])
+print('Evaluation Link: ', evaluation.app_link)

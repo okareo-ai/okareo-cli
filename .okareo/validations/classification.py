@@ -1,13 +1,19 @@
 #!/usr/bin/env python3
 
 import os
-import uuid
-import random
-import string
 from okareo import Okareo
-from okareo_api_client.models import ScenarioSetCreate, ScenarioSetResponse, SeedData, ScenarioType
+from okareo_api_client.models import ScenarioSetCreate, SeedData, ScenarioType
 from okareo.model_under_test import OpenAIModel
 from okareo_api_client.models.test_run_type import TestRunType
+
+import random
+import string
+
+def generate_random_string(length):
+    alphabet = string.ascii_letters + string.digits
+    return ''.join(random.choice(alphabet) for _ in range(length))
+
+random_string = generate_random_string(6)
 
 OKAREO_API_KEY = os.environ["OKAREO_API_KEY"]
 OPENAI_API_KEY = os.environ["OPENAI_API_KEY"]
@@ -56,7 +62,7 @@ Speak to a human
 """
 
 scenario_set_create = ScenarioSetCreate(
-    name=f"{OKAREO_RUN_ID} - Scenario",
+    name=f"Github Action Test ID {OKAREO_RUN_ID} - {random_string} - Scenario",
     number_examples=1,
     generation_type=ScenarioType.SEED,
     seed_data=[
@@ -87,11 +93,11 @@ scenario_set_create = ScenarioSetCreate(
     ],
 )
 scenario = okareo.create_scenario_set(scenario_set_create)
-print('Scenario: ', scenario.additional_properties['app_link'])
+print('Scenario Link: ', scenario.app_link)
 
 # Establish the model that is being evaluated, at minimum this is a named model for future reference
 model_under_test = okareo.register_model(
-    name=f"{OKAREO_RUN_ID} - MUT",
+    name=f"Github Action Test ID {OKAREO_RUN_ID} - {random_string} - MUT",
     tags=[OKAREO_RUN_ID],
     model=OpenAIModel(
         model_id="gpt-3.5-turbo",
@@ -103,11 +109,11 @@ model_under_test = okareo.register_model(
 
 # run the test and call the model for each item in the scenario set
 evaluation = model_under_test.run_test(
-    name=f"{OKAREO_RUN_ID} - EVAL",
+    name=f"Github Action Test ID {OKAREO_RUN_ID} - {random_string} - EVAL",
     scenario=scenario,
     api_key=OPENAI_API_KEY,
     test_run_type=TestRunType.MULTI_CLASS_CLASSIFICATION,
     calculate_metrics=True,
 )
 
-print(evaluation.additional_properties['app_link'])
+print('Evaluation Link: ', evaluation.app_link)
