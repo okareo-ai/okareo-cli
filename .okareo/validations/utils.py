@@ -22,21 +22,9 @@ def read_in_data_points(file_path, max_line=None):
     return data
 
 
-def run_pred(classifier, features_test):
-    predictions = classifier.predict(features_test)
+def run_pred(classifier, test_X):
+    predictions = classifier.predict(test_X)
     return list(predictions.flatten())
-
-
-def get_tfidf_featurizer(train_X):
-    vectorizer = TfidfVectorizer()
-    vectorizer.fit_transform(train_X)
-    return vectorizer
-
-
-def get_sbert_featurizer():
-    model = SentenceTransformer(
-        'sentence-transformers/paraphrase-MiniLM-L6-v2')
-    return model
 
 
 def get_svm_classifier(train_X, train_Y):
@@ -77,9 +65,11 @@ def parse_sceenario_json_data(json_response):
     return expanded_data_X, expanded_data_Y
 
 
-def check_basic_assertion(baseline_test_Y, pred_Y, attack_test_Y, attack_pred_Y, delta):
+def check_basic_assertion(baseline_test_Y, pred_Y,
+                          attack_test_Y, attack_pred_Y, delta):
     precision_s1, recall_s1, fscore_s1, _support_s1 = score(
         baseline_test_Y, pred_Y, average='weighted')
     precision_s2, recall_s2, fscore_s2, _support_s2 = score(
         attack_test_Y, attack_pred_Y, average='weighted')
-    return (precision_s1 - delta > precision_s2) and (recall_s1 - delta > recall_s2) and (fscore_s1 - delta > fscore_s2)
+    return (precision_s1 - delta > precision_s2) and (recall_s1 -
+                                                      delta > recall_s2) and (fscore_s1 - delta > fscore_s2)
