@@ -21,6 +21,11 @@
 # Go workspace file
 go.work
 
-# ignore artifacts of the development environment
-.okareo/install.sh
-dist
+# ignore artifacts of the cli executing
+**/install.sh
+**/dist
+**/node_modules
+**/package-lock.json
+**/package.json
+**/tsconfig.json
+
