@@ -1,84 +1,205 @@
 from sklearn.metrics import classification_report
 from okareo import Okareo
 from okareo_api_client.models import ScenarioSetCreate, SeedData
-from utils import read_in_data_points, run_pred, get_tfidf_featurizer, get_rf_classifier, download_scenario_data_points, parse_sceenario_json_data, check_basic_assertion, get_svm_classifier, get_sbert_featurizer
+from utils import read_in_data_points, run_pred, download_scenario_data_points, parse_sceenario_json_data, check_basic_assertion
 import random
 import string
 import os
+from model_utils import TfidfSvmClassificationModel, TfidfRFClassificationModel, SbertSvmClassificationModel, SbertRFClassificationModel
 
 OKAREO_API_KEY = os.environ["OKAREO_API_KEY"]
 okareo = Okareo(OKAREO_API_KEY)
 DELTA_DIFF = 0.02  # Large delta is more strict and better
+
 file_path = os.path.join(
     os.path.dirname(__file__), "datasets/sentiment/binary_small.txt"
 )
 
 
+def get_scenario_set(
+    name,
+    number_examples,
+    generation_type,
+    seed_data
+):
+    scenario_set_create = ScenarioSetCreate(
+        name=name,
+        number_examples=number_examples,
+        generation_type=generation_type,
+        seed_data=seed_data
+    )
+
+    return okareo.create_scenario_set(scenario_set_create)
+
+
 def run_basic_generator(run_name, scenario_type):
-    ########################## Read In Data Points ####################################
+    ########################## Read In Data Points ###########################
     data = read_in_data_points(file_path)
     seed_data = [SeedData(input_=x, result=y) for x, y in data]
     print(f'sample size: {len(seed_data)}')
 
-    ########################## Create/Download Scenario Set ###########################
+    ########################## Create/Download Scenario Set ##################
     random_string = ''.join(random.choices(string.ascii_letters, k=10))
     max_num_samples = 5
 
-    scenario_set_create = ScenarioSetCreate(
+    scenario = get_scenario_set(
         name=f"GitHub {run_name} Scenario Categories Baseline " +
         random_string,
         number_examples=max_num_samples,
         generation_type=scenario_type,
         seed_data=seed_data
     )
+    scenario_id = scenario.scenario_id
 
-    scenario = okareo.create_scenario_set(scenario_set_create)
-    scenario_id = scenario.app_link.split('/')[-1]
+    train_X, train_Y = zip(*data)
+
+    ### Creating Models ###
+    tfidf_svm_classifier = TfidfSvmClassificationModel(
+        name="tfidf_svm classification model - " + random_string
+    )
+    tfidf_svm_classifier.fit(train_X, train_Y)
+
+    tfidf_rf_classifier = TfidfRFClassificationModel(
+        name="tfidf_rf classification model - " + random_string
+    )
+    tfidf_rf_classifier.fit(train_X, train_Y)
+
+    sbert_svm_classifier = SbertSvmClassificationModel(
+        name="sbert_svm classification model - " + random_string
+    )
+    sbert_svm_classifier.fit(train_X, train_Y)
+
+    sbert_rf_classifier = SbertRFClassificationModel(
+        name="sbert_rf classification model - " + random_string
+    )
+    sbert_rf_classifier.fit(train_X, train_Y)
+
+    run_basic_local_test(
+        run_name,
+        scenario_id,
+        data,
+        tfidf_rf_classifier,
+        tfidf_svm_classifier,
+        sbert_rf_classifier,
+        sbert_svm_classifier,
+    )
+
+    run_basic_okareo_test(
+        run_name,
+        scenario_id,
+        random_string,
+        tfidf_rf_classifier,
+        tfidf_svm_classifier,
+        sbert_rf_classifier,
+        sbert_svm_classifier,
+    )
+
+
+def run_basic_okareo_test(
+    run_name,
+    scenario_id,
+    random_string,
+    tfidf_rf_classifier,
+    tfidf_svm_classifier,
+    sbert_rf_classifier,
+    sbert_svm_classifier,
+):
+    print('================tfidf + SVM  Model======================')
+    tfidf_svm_classifier_mut = okareo.register_model(
+        name=f"GitHub {run_name} : tfidf svm classifier - " + random_string,
+        model=tfidf_svm_classifier
+    )
+
+    # use the scenario or scenario id to run the test
+    tfidf_svm_classifier_eval = tfidf_svm_classifier_mut.run_test(
+        scenario=scenario_id,
+        name=f"GitHub {run_name} : tfidf svm classifier Eval " + random_string,
+        calculate_metrics=True
+    )
+    print(tfidf_svm_classifier_eval.model_metrics.to_dict())
+    print('')
+
+    print('================tfidf + RF  Model======================')
+    tfidf_rf_classifier_mut = okareo.register_model(
+        name=f"GitHub {run_name} : tfidf rf classifier - " + random_string,
+        model=tfidf_rf_classifier
+    )
+
+    # use the scenario or scenario id to run the test
+    tfidf_rf_classifier_eval = tfidf_rf_classifier_mut.run_test(
+        scenario=scenario_id,
+        name=f"GitHub {run_name} : tfidf rf classifier Eval " + random_string,
+        calculate_metrics=True
+    )
+    print(tfidf_rf_classifier_eval.model_metrics.to_dict())
+    print('')
+
+    print('================sbert + SVM  Model======================')
+    sbert_svm_classifier_mut = okareo.register_model(
+        name=f"GitHub {run_name} : sbert svm classifier - " + random_string,
+        model=sbert_svm_classifier
+    )
+
+    # use the scenario or scenario id to run the test
+    sbert_svm_classifier_eval = sbert_svm_classifier_mut.run_test(
+        scenario=scenario_id,
+        name=f"GitHub {run_name} : sbert svm classifier Eval " + random_string,
+        calculate_metrics=True
+    )
+    print(sbert_svm_classifier_eval.model_metrics.to_dict())
+    print('')
+
+    print('================sbert + RF  Model======================')
+    sbert_rf_classifier_mut = okareo.register_model(
+        name=f"GitHub {run_name} : sbert rf classifier - " + random_string,
+        model=sbert_rf_classifier
+    )
+
+    # use the scenario or scenario id to run the test
+    sbert_rf_classifier_eval = sbert_rf_classifier_mut.run_test(
+        scenario=scenario_id,
+        name=f"GitHub {run_name} : sbert rf classifier Eval " + random_string,
+        calculate_metrics=True
+    )
+    print(sbert_rf_classifier_eval.model_metrics.to_dict())
+    print('')
+
+
+def run_basic_local_test(
+    run_name,
+    scenario_id,
+    data,
+    tfidf_rf_classifier,
+    tfidf_svm_classifier,
+    sbert_rf_classifier,
+    sbert_svm_classifier,
+):
 
     response = download_scenario_data_points(scenario_id, OKAREO_API_KEY)
     expanded_data_X, expanded_data_Y = parse_sceenario_json_data(response.text)
 
-    print(f'generated sample size: {len(expanded_data_X)}')
-
-    ########################## Running Some Basic Models ##############################
     train_X, train_Y = zip(*data)
     seed_test_X, seed_test_Y = list(train_X), list(train_Y)
     expanded_test_X, expanded_test_Y = expanded_data_X, expanded_data_Y
 
-    ### Loading Featurizers ###
-    tfidf_featurizer = get_tfidf_featurizer(train_X)
-    sbert_featurizer = get_sbert_featurizer()
+    print(f'generated sample size: {len(expanded_data_X)}')
 
-    ### Creating Models ###
-    tfidf_rf_classifier = get_rf_classifier(
-        tfidf_featurizer.transform(train_X), train_Y)
-    tfidf_svm_classifier = get_svm_classifier(
-        tfidf_featurizer.transform(train_X), train_Y)
-    sbert_rf_classifier = get_rf_classifier(
-        sbert_featurizer.encode(train_X), train_Y)
-    sbert_svm_classifier = get_svm_classifier(
-        sbert_featurizer.encode(train_X), train_Y)
+    ### Running Local Predictions ###
+    tfidf_rf_seed_pred = run_pred(tfidf_rf_classifier, seed_test_X)
+    tfidf_rf_expanded_pred = run_pred(tfidf_rf_classifier, expanded_test_X)
 
-    ### Running models ###
-    tfidf_rf_seed_pred = run_pred(
-        tfidf_rf_classifier, tfidf_featurizer.transform(seed_test_X))
-    tfidf_rf_expanded_pred = run_pred(
-        tfidf_rf_classifier, tfidf_featurizer.transform(expanded_test_X))
+    tfidf_svm_seed_pred = run_pred(tfidf_svm_classifier, seed_test_X)
+    tfidf_svm_expanded_pred = run_pred(tfidf_svm_classifier, expanded_test_X)
 
-    tfidf_svm_seed_pred = run_pred(
-        tfidf_svm_classifier, tfidf_featurizer.transform(seed_test_X))
-    tfidf_svm_expanded_pred = run_pred(
-        tfidf_svm_classifier, tfidf_featurizer.transform(expanded_test_X))
+    sbert_rf_seed_pred = run_pred(sbert_rf_classifier, seed_test_X)
+    sbert_rf_expanded_pred = run_pred(sbert_rf_classifier, expanded_test_X)
 
-    sbert_rf_seed_pred = run_pred(
-        sbert_rf_classifier, sbert_featurizer.encode(seed_test_X))
-    sbert_rf_expanded_pred = run_pred(
-        sbert_rf_classifier, sbert_featurizer.encode(expanded_test_X))
+    sbert_svm_seed_pred = run_pred(sbert_svm_classifier, seed_test_X)
+    sbert_svm_expanded_pred = run_pred(sbert_svm_classifier, expanded_test_X)
 
-    sbert_svm_seed_pred = run_pred(
-        sbert_svm_classifier, sbert_featurizer.encode(seed_test_X))
-    sbert_svm_expanded_pred = run_pred(
-        sbert_svm_classifier, sbert_featurizer.encode(expanded_test_X))
+    print('=========================================================')
+    print('================Running Local Tests======================')
+    print('=========================================================')
 
     print('================tfidf + RF  Model======================')
     print('baseline: ')

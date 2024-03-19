@@ -3,7 +3,7 @@
 import os
 
 OKAREO_API_KEY = os.getenv("OKAREO_API_KEY")
-OPENAI_API_KEY = os.getenv["OPENAI_API_KEY"]
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 OKAREO_RUN_ID = os.getenv("OKAREO_RUN_ID")
 
 if not OKAREO_API_KEY:
