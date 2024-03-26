@@ -127,7 +127,7 @@ func init() {
 	rootCmd.AddCommand(cleanCmd)
 	cleanCmd.PersistentFlags().String("config", "./.okareo/config.yml", "The Okareo configuration file for the evaluation run.")
 	cleanCmd.PersistentFlags().Bool("debug", false, "See additional stdout to debug your scripts.")
-	cleanCmd.PersistentFlags().String("files", "ALL", "The Okareo validation script you want to run.")
+	cleanCmd.PersistentFlags().String("files", "ALL", "The Okareo flow you want to run.")
 	// Here you will define your flags and configuration settings.
 
 	// Cobra supports Persistent Flags which will work for this command

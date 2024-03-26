@@ -4,6 +4,7 @@ Copyright © 2024 OKAREO oss@okareo.com
 package cmd
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -11,14 +12,18 @@ import (
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "okareo-cli",
+	Use:   "okareo",
 	Short: "Use Okaero to evaluate your use of AI/ML in your application.",
 	Long: `The Okareo CLI is a tool to help you evaluate your use of AI/ML in your application:
-
-Create .py file in .okareo/validations to contiuosly unit test your AI/ML model.`,
+To use the CLI, refer to the docs: https://docs.okareo.com/docs/sdk/cli`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
-	// Run: func(cmd *cobra.Command, args []string) { },
+	Run: func(cmd *cobra.Command, args []string) {
+		vFull, _ := cmd.Flags().GetBool("version")
+		if vFull {
+			fmt.Println("v0.0.6")
+		}
+	},
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -36,6 +41,7 @@ func init() {
 	// will be global for your application.
 
 	// rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.okareo-cli.yaml)")
+	rootCmd.PersistentFlags().BoolP("version", "v", true, "The current version of the Okareo CLI")
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.

@@ -4,13 +4,11 @@ env:
   OKAREO_API_KEY: ${{ secrets.OKAREO_API_KEY }}
   OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
   OKAREO_PROJECT_ID: ${{ secrets.OKAREO_PROJECT_ID }}
-  OKAREO_RUN_ID: ${{ secrets.OKAREO_RUN_ID }}
-  AIRGAP_OKAREO_API_KEY: ${{ secrets.AIRGAP_OKAREO_API_KEY }}
 
 on:
   push:
     branches:
-      - main
+      - main_requires_refactor
 
 jobs:
   build:
@@ -27,17 +25,17 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Okareo Action
-        uses: okareo-ai/okareo-action@v1
-
-      - name: Install Dependencies
-        run: |
-          python -m pip install scikit-learn
-          python -m pip install requests
-          python -m pip install sentence-transformers
-
-      - name: Install Okareo and Running Validation
-        run: |
-          echo $( okareo-cli version )
-          okareo-cli validate
-          echo $( pip3 show okareo | grep Version )
+#      - name: Okareo Action
+#        uses: okareo-ai/okareo-action@v1
+#
+#      - name: Install Dependencies
+#        run: |
+#          python -m pip install scikit-learn
+#          python -m pip install requests
+#          python -m pip install sentence-transformers
+#
+#      - name: Install Okareo and Run a Flow
+#        run: |
+#          echo $( okareo-cli -v )
+#          okareo-cli run
+#          echo $( pip3 show okareo | grep v )

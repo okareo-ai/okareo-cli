@@ -12,7 +12,7 @@ LDFLAGS := -s -w \
 
 .PHONY: build
 build:
-	go build -o ./dist/okareo-cli -ldflags="$(LDFLAGS)" main.go
+	go build -o ./dist/bin/okareo -ldflags="$(LDFLAGS)" main.go
 
 .PHONY: test
 test: build
@@ -50,6 +50,6 @@ release: install/goreleaser
 release/publish: install/goreleaser
 	@goreleaser release
 
-.PHONY: validate
+.PHONY: run
 generate:
-	go run main.go validate
+	go run main.go run

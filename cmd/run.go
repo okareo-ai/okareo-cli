@@ -37,12 +37,13 @@ func check(e error) {
 }
 
 var runCmd = &cobra.Command{
-	Use:   "validate",
-	Short: "Okareo CLI command to run validations",
-	Long:  `Okareo CLI command to run validations`,
+	Use:   "run",
+	Short: "Okareo CLI command to run workflows.",
+	Long:  `Okareo CLI 'runs' can include multiple scripts that perform a variety of tasks from scenario generation to model evaluation.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		isDebug, _ := cmd.Flags().GetBool("debug")
-		validationFileFlag, _ := cmd.Flags().GetString("file")
+		doUpgrade, _ := cmd.Flags().GetBool("upgrade")
+		flowFileFlag, _ := cmd.Flags().GetString("file")
 		configFileFlag, _ := cmd.Flags().GetString("config")
 
 		config_file, read_err := os.ReadFile(configFileFlag)
@@ -64,7 +65,7 @@ var runCmd = &cobra.Command{
 		s := fmt.Sprintf("%X", b)
 		var run_name string = config.Name + "-" + s
 
-		var validations_folder string = "./.okareo/validations/"
+		var flows_folder string = "./.okareo/flows/"
 		var filePattern string = config.Run.Scripts.FilePattern
 		var okareoAPIKey string = tradeForEnvValue(config.APIKey)
 		var projectId string = tradeForEnvValue(config.ProjectID)
@@ -75,53 +76,109 @@ var runCmd = &cobra.Command{
 		if strings.ToLower(language) == "python" || strings.ToLower(language) == "py" {
 			useLatest, _ := cmd.Flags().GetBool("latest")
 			if useLatest {
-				installOkareoPython(isDebug)
+				installOkareoPython(doUpgrade, isDebug)
 			}
-			if validationFileFlag != "ALL" {
-				fmt.Println(validations_folder + validationFileFlag)
-				doPythonScript(validations_folder+validationFileFlag, okareoAPIKey, projectId, run_name)
-			} else {
-				entries, err := os.ReadDir(validations_folder)
-				if err != nil {
-					log.Fatal(err)
-				}
 
-				for _, e := range entries {
+			entries, err := os.ReadDir(flows_folder)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			var foundFlow bool = false
+			for _, e := range entries {
+				if flowFileFlag != "ALL" {
+					isFile, _ := regexp.MatchString(flowFileFlag+"(.py)", e.Name())
+					if isFile {
+						if isDebug {
+							fmt.Println("Match file:", e.Name())
+						}
+						foundFlow = true
+						doPythonScript(flows_folder+e.Name(), okareoAPIKey, projectId, run_name, isDebug)
+					}
+				} else {
 					match, _ := regexp.MatchString(filePattern+"$", e.Name())
 					if isDebug {
 						fmt.Println("Match file:", e.Name(), match)
 					}
 					if match {
-						fmt.Println("Running .okareo/validations/" + e.Name())
-						doPythonScript(validations_folder+e.Name(), okareoAPIKey, projectId, run_name)
+						fmt.Println("Running .okareo/flows/" + e.Name())
+						doPythonScript(flows_folder+e.Name(), okareoAPIKey, projectId, run_name, isDebug)
 					}
 				}
 			}
+			if flowFileFlag != "ALL" && !foundFlow {
+				fmt.Println("Flow not found: " + flowFileFlag)
+			}
+			//}
 		} else if strings.ToLower(language) == "ts" || strings.ToLower(language) == "typescript" {
 			installOkareoTypescript(isDebug)
-			doTSScript(okareoAPIKey, projectId, run_name)
+			doTSBuild(isDebug)
+			var dist_folder string = "./.okareo/dist/flows/"
+
+			entries, err := os.ReadDir(flows_folder)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			var foundFlow bool = false
+			for _, e := range entries {
+				if flowFileFlag != "ALL" {
+					isFile, _ := regexp.MatchString(flowFileFlag+"(.ts)", e.Name())
+					if isFile {
+						if isDebug {
+							fmt.Println("Match file:", e.Name())
+						}
+						foundFlow = true
+						var distFile string = strings.Split(e.Name(), ".")[0] + ".js"
+						doJSScript(dist_folder+distFile, okareoAPIKey, projectId, run_name, isDebug)
+					}
+				} else {
+					match, _ := regexp.MatchString(filePattern+"$", e.Name())
+					var distFile string = strings.Split(e.Name(), ".")[0] + ".js"
+					if isDebug {
+						fmt.Println("Match file:", e.Name(), match)
+					}
+					if match {
+						fmt.Println("Running .okareo/flows/" + e.Name())
+						doJSScript(dist_folder+distFile, okareoAPIKey, projectId, run_name, isDebug)
+					}
+				}
+			}
+			if flowFileFlag != "ALL" && !foundFlow {
+				fmt.Println("Flow not found: " + flowFileFlag)
+			}
 
 		} else if strings.ToLower(language) == "js" || strings.ToLower(language) == "javascript" {
 			installOkareoJavascript(isDebug)
-			if validationFileFlag != "ALL" {
-				fmt.Println(validations_folder + validationFileFlag)
-				doJSScript(validations_folder+validationFileFlag, okareoAPIKey, projectId, run_name)
-			} else {
-				entries, err := os.ReadDir(validations_folder)
-				if err != nil {
-					log.Fatal(err)
-				}
+			entries, err := os.ReadDir(flows_folder)
+			if err != nil {
+				log.Fatal(err)
+			}
 
-				for _, e := range entries {
+			var foundFlow bool = false
+			for _, e := range entries {
+				if flowFileFlag != "ALL" {
+					isFile, _ := regexp.MatchString(flowFileFlag+"(.js)", e.Name())
+					if isFile {
+						if isDebug {
+							fmt.Println("Match file:", e.Name())
+						}
+						foundFlow = true
+						doJSScript(flows_folder+e.Name(), okareoAPIKey, projectId, run_name, isDebug)
+					}
+				} else {
 					match, _ := regexp.MatchString(filePattern+"$", e.Name())
 					if isDebug {
 						fmt.Println("Match file:", e.Name(), match)
 					}
 					if match {
-						fmt.Println("Running .okareo/validations/" + e.Name())
-						doJSScript(validations_folder+e.Name(), okareoAPIKey, projectId, run_name)
+						fmt.Println("Running .okareo/flows/" + e.Name())
+						doJSScript(flows_folder+e.Name(), okareoAPIKey, projectId, run_name, isDebug)
 					}
 				}
+			}
+			if flowFileFlag != "ALL" && !foundFlow {
+				fmt.Println("Flow not found: " + flowFileFlag)
 			}
 		} else {
 			fmt.Println("Language not supported.")
@@ -129,9 +186,12 @@ var runCmd = &cobra.Command{
 	},
 }
 
-func installOkareoPython(debug bool) {
+func installOkareoPython(doUpgrade bool, debug bool) {
 	// create the install file and overwrite if it already exists
 	inst_script := []byte("python3 -m pip install \"okareo\"\n")
+	if doUpgrade {
+		inst_script = []byte("python3 -m pip install --upgrade \"okareo\"\n")
+	}
 	f_err := os.WriteFile("./.okareo/install.sh", inst_script, 0777)
 	check(f_err)
 
@@ -157,7 +217,7 @@ func installOkareoPython(debug bool) {
 	}
 }
 
-func doPythonScript(filename string, okareoAPIKey string, projectId string, run_name string) {
+func doPythonScript(filename string, okareoAPIKey string, projectId string, run_name string, isDebug bool) {
 	cmd := exec.Command("python3", filename)
 
 	// Setup the environment for the caller
@@ -174,6 +234,9 @@ func doPythonScript(filename string, okareoAPIKey string, projectId string, run_
 
 	// setup the output handling and call the script
 	pipe, err := cmd.StdoutPipe()
+	if isDebug {
+		cmd.Stderr = os.Stderr
+	}
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -225,11 +288,12 @@ func installOkareoTypescript(debug bool) {
 		"private": "true",
 		"devDependencies": {
 			"@types/node": "^20.11.28",
-			"okareo-ts-sdk": "^0.0.19",
+			"okareo-ts-sdk": "^0.0.23",
 			"typescript": "^5.4.2"
 		},
 		"scripts": {
-			"start": "tsc && node dist/index.js"
+			"start": "tsc && node dist/flows/index.js",
+			"build": "tsc"
 		}
 	}	  
 	`)
@@ -263,11 +327,48 @@ func installOkareoTypescript(debug bool) {
 
 }
 
-func doTSScript(okareoAPIKey string, projectId string, run_name string) {
-	cmd := exec.Command("npm", "run", "start")
+func doTSBuild(isDebug bool) {
+	println("Building typescript flows")
+	cmd := exec.Command("npm", "run", "build")
 	cmd.Dir = "./.okareo"
 	// Setup the environment for the caller
 	cmd.Env = os.Environ()
+	if isDebug {
+		cmd.Stderr = os.Stderr
+	}
+
+	// setup the output handling and call the script
+	pipe, err := cmd.StdoutPipe()
+	if isDebug {
+		cmd.Stderr = os.Stderr
+	}
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err := cmd.Start(); err != nil {
+		log.Fatal(err)
+	}
+	reader := bufio.NewReader(pipe)
+	line, err := reader.ReadString('\n')
+	for err == nil {
+		fmt.Print(line)
+		line, err = reader.ReadString('\n')
+	}
+
+	if err := cmd.Wait(); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func doTSScript(filename string, okareoAPIKey string, projectId string, run_name string, isDebug bool) {
+	println("Running", filename)
+	cmd := exec.Command("node", filename)
+	cmd.Dir = "./.okareo"
+	// Setup the environment for the caller
+	cmd.Env = os.Environ()
+	if isDebug {
+		cmd.Stderr = os.Stderr
+	}
 	if run_name != "" {
 		cmd.Env = append(cmd.Env, "OKAREO_RUN_ID="+run_name)
 	}
@@ -280,6 +381,9 @@ func doTSScript(okareoAPIKey string, projectId string, run_name string) {
 
 	// setup the output handling and call the script
 	pipe, err := cmd.StdoutPipe()
+	if isDebug {
+		cmd.Stderr = os.Stderr
+	}
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -308,7 +412,7 @@ func installOkareoJavascript(debug bool) {
 		"author": "Okareo @ 2024",
 		"private": "true",
 		"devDependencies": {
-			"okareo-ts-sdk": "^0.0.19"
+			"okareo-ts-sdk": "^0.0.23"
 		}
 	}	  
 	`)
@@ -341,7 +445,7 @@ func installOkareoJavascript(debug bool) {
 	}
 }
 
-func doJSScript(filename string, okareoAPIKey string, projectId string, run_name string) {
+func doJSScript(filename string, okareoAPIKey string, projectId string, run_name string, isDebug bool) {
 	cmd := exec.Command("node", filename)
 
 	// Setup the environment for the caller
@@ -358,6 +462,9 @@ func doJSScript(filename string, okareoAPIKey string, projectId string, run_name
 
 	// setup the output handling and call the script
 	pipe, err := cmd.StdoutPipe()
+	if isDebug {
+		cmd.Stderr = os.Stderr
+	}
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -385,17 +492,9 @@ func tradeForEnvValue(envVar string) string {
 
 func init() {
 	rootCmd.AddCommand(runCmd)
-	runCmd.PersistentFlags().String("file", "ALL", "The Okareo validation script you want to run.")
-	runCmd.PersistentFlags().String("config", "./.okareo/config.yml", "The Okareo configuration file for the evaluation run.")
-	runCmd.PersistentFlags().Bool("debug", false, "See additional stdout to debug your scripts.")
-	runCmd.PersistentFlags().Bool("latest", true, "Install the latest version of Okareo. False will require you to maintain okareo yourself.")
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// runCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// runCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	runCmd.PersistentFlags().StringP("file", "f", "ALL", "The Okareo flow script you want to run.")
+	runCmd.PersistentFlags().StringP("config", "c", "./.okareo/config.yml", "The Okareo configuration file for the evaluation run.")
+	runCmd.PersistentFlags().BoolP("debug", "d", false, "See additional stdout to debug your scripts.")
+	runCmd.PersistentFlags().BoolP("upgrade", "u", false, "Force upgrade to the latest Okareo library. Currently only supported for python.")
+	runCmd.PersistentFlags().BoolP("latest", "l", true, "Install the latest version of Okareo. False will require you to maintain okareo yourself.")
 }
