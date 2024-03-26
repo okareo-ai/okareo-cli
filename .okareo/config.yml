@@ -1,7 +1,7 @@
 name: CLI Evaluation 
 api-key: ${OKAREO_API_KEY}
 project-id: ${OKAREO_PROJECT_ID}
-language: "python"
+language: "typescript"
 run:
   scripts:
-    file-pattern: '.*\.py'
+    file-pattern: '.*\.ts'

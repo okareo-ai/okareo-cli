@@ -113,7 +113,7 @@ var runCmd = &cobra.Command{
 		} else if strings.ToLower(language) == "ts" || strings.ToLower(language) == "typescript" {
 			installOkareoTypescript(isDebug)
 			doTSBuild(isDebug)
-			var dist_folder string = "./.okareo/dist/flows/"
+			var dist_folder string = "./.okareo/dist/"
 
 			entries, err := os.ReadDir(flows_folder)
 			if err != nil {
@@ -292,7 +292,6 @@ func installOkareoTypescript(debug bool) {
 			"typescript": "^5.4.2"
 		},
 		"scripts": {
-			"start": "tsc && node dist/flows/index.js",
 			"build": "tsc"
 		}
 	}	  
