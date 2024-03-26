@@ -1,7 +1,8 @@
 # Use defaults for most settings.
 
-# Binary name.
-# Can be a path (e.g. `bin/app`) to wrap the binary in a directory.
-#
-# Default: Project directory name
-binary: bin/okareo
+builds:
+    # Binary name.
+    # Can be a path (e.g. `bin/app`) to wrap the binary in a directory.
+    #
+    # Default: Project directory name
+    binary: bin/okareo
