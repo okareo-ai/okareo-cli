@@ -1,8 +1,5 @@
-# Use defaults for most settings.
+# This is an example .goreleaser.yml file with some sensible defaults.
+# Make sure to check the documentation at https://goreleaser.com
 
 builds:
-    # Binary name.
-    # Can be a path (e.g. `bin/app`) to wrap the binary in a directory.
-    #
-    # Default: Project directory name
-    binary: bin/okareo
+  - binary: bin/okareo
