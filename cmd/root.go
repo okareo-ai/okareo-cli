@@ -21,7 +21,7 @@ To use the CLI, refer to the docs: https://docs.okareo.com/docs/sdk/cli`,
 	Run: func(cmd *cobra.Command, args []string) {
 		vFull, _ := cmd.Flags().GetBool("version")
 		if vFull {
-			fmt.Println("v0.0.6")
+			fmt.Println("v0.0.7")
 		}
 	},
 }
@@ -39,8 +39,6 @@ func init() {
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
-
-	// rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.okareo-cli.yaml)")
 	rootCmd.PersistentFlags().BoolP("version", "v", true, "The current version of the Okareo CLI")
 
 	// Cobra also supports local flags, which will only run

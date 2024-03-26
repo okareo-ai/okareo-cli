@@ -36,6 +36,6 @@ jobs:
 #
 #      - name: Install Okareo and Run a Flow
 #        run: |
-#          echo $( okareo-cli -v )
-#          okareo-cli run
+#          echo $( okareo -v )
+#          okareo run
 #          echo $( pip3 show okareo | grep v )

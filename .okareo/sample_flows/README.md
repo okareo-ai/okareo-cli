@@ -1,4 +1,4 @@
 
-# Sample Examples for running okareo-cli
+# Sample Examples for running okareo
 
 Move these samples under ./flows for testing

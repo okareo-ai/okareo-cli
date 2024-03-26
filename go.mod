@@ -1,4 +1,4 @@
-module okareo-cli
+module okareo
 
 go 1.21
 

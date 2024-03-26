@@ -11,7 +11,7 @@ A tool for interacting with the Okareo API
 4. Add .okareo/config.yml
 5. Add your test scripts in .okareo/flows
 
-- .okareo-cli
+- .okareo
     - config.yml
     - flows
         - classification.py
