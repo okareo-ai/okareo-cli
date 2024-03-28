@@ -111,18 +111,6 @@ var cleanCmd = &cobra.Command{
 	},
 }
 
-func fileExists(filename string) bool {
-	_, err := os.Stat(filename)
-	return !os.IsNotExist(err)
-}
-func dirExists(filename string) bool {
-	info, err := os.Stat(filename)
-	if os.IsNotExist(err) {
-		return false
-	}
-	return info.IsDir()
-}
-
 func init() {
 	rootCmd.AddCommand(cleanCmd)
 	cleanCmd.PersistentFlags().String("config", "./.okareo/config.yml", "The Okareo configuration file for the evaluation run.")

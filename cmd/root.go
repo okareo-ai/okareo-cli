@@ -26,6 +26,21 @@ To use the CLI, refer to the docs: https://docs.okareo.com/docs/sdk/cli`,
 	},
 }
 
+// convenience function for working with files
+func fileExists(filename string) bool {
+	_, err := os.Stat(filename)
+	return !os.IsNotExist(err)
+}
+
+// convenience function for working with directories
+func dirExists(filename string) bool {
+	info, err := os.Stat(filename)
+	if os.IsNotExist(err) {
+		return false
+	}
+	return info.IsDir()
+}
+
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {

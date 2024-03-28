@@ -24,7 +24,7 @@ type Config struct {
 	ProjectID string `yaml:"project-id"`
 	Language  string `yaml:"language"`
 	Run       struct {
-		Scripts struct {
+		Flows struct {
 			FilePattern string `yaml:"file-pattern"`
 		}
 	}
@@ -39,7 +39,7 @@ func check(e error) {
 var runCmd = &cobra.Command{
 	Use:   "run",
 	Short: "Okareo CLI command to run workflows.",
-	Long:  `Okareo CLI 'runs' can include multiple scripts that perform a variety of tasks from scenario generation to model evaluation.`,
+	Long:  `Okareo CLI 'runs' can include multiple flows that perform a variety of tasks from scenario generation to model evaluation.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		isDebug, _ := cmd.Flags().GetBool("debug")
 		doUpgrade, _ := cmd.Flags().GetBool("upgrade")
@@ -66,7 +66,7 @@ var runCmd = &cobra.Command{
 		var run_name string = config.Name + "-" + s
 
 		var flows_folder string = "./.okareo/flows/"
-		var filePattern string = config.Run.Scripts.FilePattern
+		var filePattern string = config.Run.Flows.FilePattern
 		var okareoAPIKey string = tradeForEnvValue(config.APIKey)
 		var projectId string = tradeForEnvValue(config.ProjectID)
 		var language string = "python"
@@ -338,51 +338,8 @@ func doTSBuild(isDebug bool) {
 
 	// setup the output handling and call the script
 	pipe, err := cmd.StdoutPipe()
-	if isDebug {
-		cmd.Stderr = os.Stderr
-	}
-	if err != nil {
-		log.Fatal(err)
-	}
-	if err := cmd.Start(); err != nil {
-		log.Fatal(err)
-	}
-	reader := bufio.NewReader(pipe)
-	line, err := reader.ReadString('\n')
-	for err == nil {
-		fmt.Print(line)
-		line, err = reader.ReadString('\n')
-	}
+	cmd.Stderr = os.Stderr
 
-	if err := cmd.Wait(); err != nil {
-		log.Fatal(err)
-	}
-}
-
-func doTSScript(filename string, okareoAPIKey string, projectId string, run_name string, isDebug bool) {
-	println("Running", filename)
-	cmd := exec.Command("node", filename)
-	cmd.Dir = "./.okareo"
-	// Setup the environment for the caller
-	cmd.Env = os.Environ()
-	if isDebug {
-		cmd.Stderr = os.Stderr
-	}
-	if run_name != "" {
-		cmd.Env = append(cmd.Env, "OKAREO_RUN_ID="+run_name)
-	}
-	if okareoAPIKey != "" {
-		cmd.Env = append(cmd.Env, "OKAREO_API_KEY="+okareoAPIKey)
-	}
-	if projectId != "" {
-		cmd.Env = append(cmd.Env, "PROJECT_ID="+projectId)
-	}
-
-	// setup the output handling and call the script
-	pipe, err := cmd.StdoutPipe()
-	if isDebug {
-		cmd.Stderr = os.Stderr
-	}
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -461,9 +418,8 @@ func doJSScript(filename string, okareoAPIKey string, projectId string, run_name
 
 	// setup the output handling and call the script
 	pipe, err := cmd.StdoutPipe()
-	if isDebug {
-		cmd.Stderr = os.Stderr
-	}
+	cmd.Stderr = os.Stderr
+
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -493,7 +449,7 @@ func init() {
 	rootCmd.AddCommand(runCmd)
 	runCmd.PersistentFlags().StringP("file", "f", "ALL", "The Okareo flow script you want to run.")
 	runCmd.PersistentFlags().StringP("config", "c", "./.okareo/config.yml", "The Okareo configuration file for the evaluation run.")
-	runCmd.PersistentFlags().BoolP("debug", "d", false, "See additional stdout to debug your scripts.")
+	runCmd.PersistentFlags().BoolP("debug", "d", false, "See additional stdout to debug your flows.")
 	runCmd.PersistentFlags().BoolP("upgrade", "u", false, "Force upgrade to the latest Okareo library. Currently only supported for python.")
 	runCmd.PersistentFlags().BoolP("latest", "l", true, "Install the latest version of Okareo. False will require you to maintain okareo yourself.")
 }
