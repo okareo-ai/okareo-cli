@@ -288,7 +288,7 @@ func installOkareoTypescript(debug bool) {
 		"private": "true",
 		"devDependencies": {
 			"@types/node": "^20.11.28",
-			"okareo-ts-sdk": "^0.0.24",
+			"okareo-ts-sdk": "latest",
 			"typescript": "^5.4.2"
 		},
 		"scripts": {
@@ -411,7 +411,7 @@ func installOkareoJavascript(debug bool) {
 		"author": "Okareo @ 2024",
 		"private": "true",
 		"devDependencies": {
-			"okareo-ts-sdk": "^0.0.24"
+			"okareo-ts-sdk": "latest"
 		}
 	}	  
 	`)
