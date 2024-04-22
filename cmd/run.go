@@ -18,6 +18,14 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+type FlowConfig struct {
+	Name        string   `yaml:"name"`
+	Model_id    string   `yaml:"model_id"`
+	Scenario_id string   `yaml:"scenario_id"`
+	Type        string   `yaml:"type"`
+	Checks      []string `yaml:"checks"`
+}
+
 type Config struct {
 	Name      string
 	APIKey    string `yaml:"api-key"`
@@ -25,7 +33,8 @@ type Config struct {
 	Language  string `yaml:"language"`
 	Run       struct {
 		Flows struct {
-			FilePattern string `yaml:"file-pattern"`
+			FilePattern string        `yaml:"file-pattern"`
+			FlowConfigs []*FlowConfig `yaml:"configs"`
 		}
 	}
 }
@@ -73,6 +82,9 @@ var runCmd = &cobra.Command{
 		if config.Language != "" {
 			language = config.Language
 		}
+
+		createConfigFlows(flows_folder, language, config.Run.Flows.FlowConfigs, isDebug)
+
 		if strings.ToLower(language) == "python" || strings.ToLower(language) == "py" {
 			useLatest, _ := cmd.Flags().GetBool("latest")
 			if useLatest {
@@ -119,7 +131,6 @@ var runCmd = &cobra.Command{
 			if err != nil {
 				log.Fatal(err)
 			}
-
 			var foundFlow bool = false
 			for _, e := range entries {
 				if flowFileFlag != "ALL" {
@@ -144,6 +155,23 @@ var runCmd = &cobra.Command{
 					}
 				}
 			}
+
+			config_entries, err := os.ReadDir(flows_folder + "/config/")
+			if err != nil {
+				log.Fatal(err)
+			}
+			for _, e := range config_entries {
+				match, _ := regexp.MatchString(filePattern+"$", e.Name())
+				var distFile string = strings.Split(e.Name(), ".")[0] + ".js"
+				if isDebug {
+					fmt.Println("Match file:", e.Name(), match)
+				}
+				if match {
+					fmt.Println("Running .okareo/flows/config/" + e.Name())
+					doJSScript(dist_folder+"config/"+distFile, okareoAPIKey, projectId, run_name, isDebug)
+				}
+			}
+
 			if flowFileFlag != "ALL" && !foundFlow {
 				fmt.Println("Flow not found: " + flowFileFlag)
 			}
@@ -184,6 +212,73 @@ var runCmd = &cobra.Command{
 			fmt.Println("Language not supported.")
 		}
 	},
+}
+
+func createConfigFlows(flows_folder string, language string, flows []*FlowConfig, debug bool) {
+	var config_dir string = flows_folder + "config/"
+	if debug {
+		fmt.Println("Creating flows in: " + config_dir)
+	}
+	rm_err := os.RemoveAll(config_dir)
+	if rm_err != nil {
+		if debug {
+			fmt.Println("Flow Remove Error")
+			fmt.Println(rm_err)
+		}
+	} else {
+		fmt.Println("Flow Remove Success")
+	}
+
+	mk_err := os.Mkdir(config_dir, 0777)
+	if mk_err != nil {
+		if debug {
+			fmt.Println("Flow directory creation failed with error")
+			fmt.Println(mk_err)
+		}
+	}
+
+	for i := 0; i < len(flows); i++ {
+		var checks = `[`
+		if len(flows[i].Checks) > 0 {
+			for j := 0; j < len(flows[i].Checks); j++ {
+				var check_item = `"` + flows[i].Checks[j] + `", `
+				checks += check_item
+			}
+		}
+		checks += `]`
+		//var file_name = strings.ReplaceAll(flows[i].Name, " ", "_")
+		//file_name = strings.ReplaceAll(file_name, "/", "_")
+		var file_name = regexp.MustCompile(`[^a-zA-Z0-9]+`).ReplaceAllString(flows[i].Name, "_")
+		var flow_file string = config_dir + file_name + ".ts"
+		var file_content []byte = []byte(`
+import { Okareo } from 'okareo-ts-sdk';
+const main = async () => {
+	try {
+		const okareo = new Okareo({api_key:process.env.OKAREO_API_KEY });
+		const pData: any[] = await okareo.getProjects();
+		const project_id = pData.find(p => p.name === "Global")?.id;
+		const scenario_id: string = "` + flows[i].Scenario_id + `";
+		const model_id: string = "` + flows[i].Model_id + `";
+		const results: any = await okareo.run_config_test({
+			project_id,
+			scenario_id, 
+			model_id,
+			type: "` + flows[i].Type + `",
+			checks: ` + checks + `
+		});
+		console.log(results);
+		if (results) {
+			console.log(results.app_link);
+		}
+	} catch (error) {
+		console.error(error);
+	}
+}
+main();
+`)
+		f_err := os.WriteFile(flow_file, file_content, 0777)
+		check(f_err)
+	}
 }
 
 func installOkareoPython(doUpgrade bool, debug bool) {
