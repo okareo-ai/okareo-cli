@@ -238,19 +238,20 @@ func createConfigFlows(flows_folder string, language string, flows []*FlowConfig
 	}
 
 	for i := 0; i < len(flows); i++ {
-		var checks = `[`
-		if len(flows[i].Checks) > 0 {
-			for j := 0; j < len(flows[i].Checks); j++ {
-				var check_item = `"` + flows[i].Checks[j] + `", `
-				checks += check_item
+		if strings.ToLower(language) == "ts" || strings.ToLower(language) == "typescript" {
+			var checks = `[`
+			if len(flows[i].Checks) > 0 {
+				for j := 0; j < len(flows[i].Checks); j++ {
+					var check_item = `"` + flows[i].Checks[j] + `", `
+					checks += check_item
+				}
 			}
-		}
-		checks += `]`
-		//var file_name = strings.ReplaceAll(flows[i].Name, " ", "_")
-		//file_name = strings.ReplaceAll(file_name, "/", "_")
-		var file_name = regexp.MustCompile(`[^a-zA-Z0-9]+`).ReplaceAllString(flows[i].Name, "_")
-		var flow_file string = config_dir + file_name + ".ts"
-		var file_content []byte = []byte(`
+			checks += `]`
+			//var file_name = strings.ReplaceAll(flows[i].Name, " ", "_")
+			//file_name = strings.ReplaceAll(file_name, "/", "_")
+			var file_name = regexp.MustCompile(`[^a-zA-Z0-9]+`).ReplaceAllString(flows[i].Name, "_")
+			var flow_file string = config_dir + file_name + ".ts"
+			var file_content []byte = []byte(`
 import { Okareo } from 'okareo-ts-sdk';
 const main = async () => {
 	try {
@@ -276,8 +277,38 @@ const main = async () => {
 }
 main();
 `)
-		f_err := os.WriteFile(flow_file, file_content, 0777)
-		check(f_err)
+			f_err := os.WriteFile(flow_file, file_content, 0777)
+			check(f_err)
+		} else if strings.ToLower(language) == "py" || strings.ToLower(language) == "python" {
+			var checks = `[`
+			if len(flows[i].Checks) > 0 {
+				for j := 0; j < len(flows[i].Checks); j++ {
+					var check_item = `"` + flows[i].Checks[j] + `", `
+					checks += check_item
+				}
+			}
+			checks += `]`
+			//var file_name = strings.ReplaceAll(flows[i].Name, " ", "_")
+			//file_name = strings.ReplaceAll(file_name, "/", "_")
+			var file_name = regexp.MustCompile(`[^a-zA-Z0-9]+`).ReplaceAllString(flows[i].Name, "_")
+			var flow_file string = config_dir + file_name + ".py"
+			var file_content []byte = []byte(`
+import random
+import string
+import os
+import tempfile
+
+from okareo import Okareo
+from okareo.model_under_test import OpenAIModel
+from okareo_api_client.models.test_run_type import TestRunType
+
+okareo = Okareo(OKAREO_API_KEY)
+`)
+			fmt.Println("Config Python Flow Stub: " + file_name)
+			f_err := os.WriteFile(flow_file, file_content, 0777)
+			check(f_err)
+
+		}
 	}
 }
 
