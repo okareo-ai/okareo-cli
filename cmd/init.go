@@ -48,10 +48,24 @@ var initCmd = &cobra.Command{
 		config := []byte(``)
 		example_flow := []byte(``)
 
-		if strings.ToUpper(language) == "PYTHON" || strings.ToUpper(language) == "PY" {
+		if language == "" {
 			config = []byte(`name: CLI Evaluation 
 api-key: ${OKAREO_API_KEY}
-project-id: ${OKAREO_PROJECT_ID}
+run:
+  flows:
+    configs:
+#      - name: "Example Flow"
+#        model-id: "MODEL_ID"
+#        scenario-id: "SCENARIO_ID"
+#        type: "NL_GENERATION"
+#        openai-key: "${OPENAI_API_KEY}"
+#        checks:
+#          - uniqueness
+#          - fluency
+`)
+		} else if strings.ToLower(language) == "python" || strings.ToLower(language) == "py" {
+			config = []byte(`name: CLI Evaluation 
+api-key: ${OKAREO_API_KEY}
 language: "python"
 run:
   flows:
@@ -60,10 +74,9 @@ run:
 			example_flow = getExamplePythonFlow()
 			flow_example_path += ".py"
 
-		} else if strings.ToUpper(language) == "JAVASCRIPT" || strings.ToUpper(language) == "JS" {
+		} else if strings.ToLower(language) == "javascript" || strings.ToLower(language) == "js" {
 			config = []byte(`name: CLI Evaluation 
 api-key: ${OKAREO_API_KEY}
-project-id: ${OKAREO_PROJECT_ID}
 language: "javascript"
 run:
   flows:
@@ -72,10 +85,9 @@ run:
 			example_flow = getExampleJavascriptFlow()
 			flow_example_path += ".js"
 
-		} else if strings.ToUpper(language) == "TYPESCRIPT" || strings.ToUpper(language) == "TS" {
+		} else if strings.ToLower(language) == "typescript" || strings.ToLower(language) == "ts" {
 			config = []byte(`name: CLI Evaluation 
 api-key: ${OKAREO_API_KEY}
-project-id: ${OKAREO_PROJECT_ID}
 language: "typescript"
 run:
   flows:
@@ -108,10 +120,13 @@ run:
 			fff_err := os.Mkdir(flow_folder_path, 0777)
 			check(fff_err)
 		}
-		_, err_example := os.Stat(flow_example_path)
-		if os.IsNotExist(err_example) {
-			f_err := os.WriteFile(flow_example_path, example_flow, 0777)
-			check(f_err)
+
+		if language != "" {
+			_, err_example := os.Stat(flow_example_path)
+			if os.IsNotExist(err_example) {
+				f_err := os.WriteFile(flow_example_path, example_flow, 0777)
+				check(f_err)
+			}
 		}
 
 	},
@@ -161,7 +176,7 @@ main();`)
 
 func init() {
 	rootCmd.AddCommand(initCmd)
-	initCmd.PersistentFlags().StringP("language", "l", "python", "The language you want to configure: Python, Javascript, or Typescript.")
+	initCmd.PersistentFlags().StringP("language", "l", "", "The language you want to configure: Python, Javascript, or Typescript.")
 	initCmd.PersistentFlags().BoolP("force", "f", false, "Forces the exiting configuration to be overwritten.")
 	initCmd.PersistentFlags().BoolP("debug", "d", false, "See additional stdout to debug the init process.")
 }
