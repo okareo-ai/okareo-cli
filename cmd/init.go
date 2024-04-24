@@ -51,6 +51,8 @@ var initCmd = &cobra.Command{
 		if language == "" {
 			config = []byte(`name: CLI Evaluation 
 api-key: ${OKAREO_API_KEY}
+model-keys:
+  -openai: ${OPENAI_API_KEY}
 run:
   flows:
     configs:
