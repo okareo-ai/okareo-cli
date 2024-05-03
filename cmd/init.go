@@ -75,6 +75,7 @@ run:
 `)
 			example_flow = getExamplePythonFlow()
 			flow_example_path += ".py"
+			installOkareoPython(true, isDebug)
 
 		} else if strings.ToLower(language) == "javascript" || strings.ToLower(language) == "js" {
 			config = []byte(`name: CLI Evaluation 
@@ -86,6 +87,7 @@ run:
 `)
 			example_flow = getExampleJavascriptFlow()
 			flow_example_path += ".js"
+			installOkareoJavascript(isDebug)
 
 		} else if strings.ToLower(language) == "typescript" || strings.ToLower(language) == "ts" {
 			config = []byte(`name: CLI Evaluation 
@@ -97,6 +99,7 @@ run:
 `)
 			example_flow = getExampleTypescriptFlow()
 			flow_example_path += ".ts"
+			installOkareoTypescript(isDebug)
 		}
 
 		_, err_okareo_folder := os.Stat(okareo_folder)

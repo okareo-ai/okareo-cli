@@ -23,7 +23,7 @@ var cleanCmd = &cobra.Command{
 		files, _ := cmd.Flags().GetString("files")
 		configFileFlag, _ := cmd.Flags().GetString("config")
 
-		var pkg_file = "./.okareo/package.json"
+		//var pkg_file = "./.okareo/package.json"
 		var pkg_lock_file = "./.okareo/package-lock.json"
 		var tsconfig_file = "./.okareo/tsconfig.json"
 		var install_file = "./.okareo/install.sh"
@@ -58,16 +58,18 @@ var cleanCmd = &cobra.Command{
 			}
 		}
 		if strings.ToLower(language) == "js" || strings.ToLower(language) == "javascript" || strings.ToLower(language) == "ts" || strings.ToLower(language) == "typescript" || files == "ALL" {
-			if fileExists(pkg_file) {
-				p_err := os.Remove(pkg_file)
-				if p_err != nil {
-					fmt.Println("ERROR", pkg_file)
-					fmt.Println(p_err)
+			/*
+				if fileExists(pkg_file) {
+					p_err := os.Remove(pkg_file)
+					if p_err != nil {
+						fmt.Println("ERROR", pkg_file)
+						fmt.Println(p_err)
+					}
+					if isDebug {
+						fmt.Println("Removed", pkg_file)
+					}
 				}
-				if isDebug {
-					fmt.Println("Removed", pkg_file)
-				}
-			}
+			*/
 			if fileExists(pkg_lock_file) {
 				p_err := os.Remove(pkg_lock_file)
 				if p_err != nil {

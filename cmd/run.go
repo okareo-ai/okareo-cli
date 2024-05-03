@@ -304,14 +304,18 @@ func get_model(api_token string, model_id string, isDebug bool) *Model {
 	req.Header.Add("api-key", api_token)
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Print("error")
+		fmt.Print("error", err)
 		fmt.Print(err)
 	}
 
 	model := &Model{}
 	derr := json.NewDecoder(resp.Body).Decode(model)
 	if derr != nil {
+		println("Error decoding model.", derr)
 		panic(derr)
+	}
+	if isDebug {
+		println("Model ID: ", model.ID)
 	}
 
 	if resp.StatusCode != http.StatusCreated {
