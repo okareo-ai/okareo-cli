@@ -135,6 +135,9 @@ var runCmd = &cobra.Command{
 			} else if strings.ToLower(language) == "typescript" || strings.ToLower(language) == "ts" {
 				language = "typescript"
 				runScripts = true
+			} else if strings.ToLower(language) == "javascript" || strings.ToLower(language) == "js" {
+				language = "javascript"
+				runScripts = true
 			}
 		}
 
@@ -234,22 +237,6 @@ var runCmd = &cobra.Command{
 							fmt.Println("Running .okareo/flows/" + e.Name())
 							doJSScript(dist_folder+distFile, okareoAPIKey, projectId, run_name, isDebug)
 						}
-					}
-				}
-
-				config_entries, err := os.ReadDir(flows_folder + "/config/")
-				if err != nil {
-					log.Fatal(err)
-				}
-				for _, e := range config_entries {
-					match, _ := regexp.MatchString(filePattern+"$", e.Name())
-					var distFile string = strings.Split(e.Name(), ".")[0] + ".js"
-					if isDebug {
-						fmt.Println("Match file:", e.Name(), match)
-					}
-					if match {
-						fmt.Println("Running .okareo/flows/config/" + e.Name())
-						doJSScript(dist_folder+"config/"+distFile, okareoAPIKey, projectId, run_name, isDebug)
 					}
 				}
 
