@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -20,111 +19,101 @@ var cleanCmd = &cobra.Command{
 	Long:  `Okareo CLI command to clean .okareo directory`,
 	Run: func(cmd *cobra.Command, args []string) {
 		isDebug, _ := cmd.Flags().GetBool("debug")
-		files, _ := cmd.Flags().GetString("files")
-		configFileFlag, _ := cmd.Flags().GetString("config")
+		force, _ := cmd.Flags().GetBool("force")
 
-		//var pkg_file = "./.okareo/package.json"
-		var pkg_lock_file = "./.okareo/package-lock.json"
-		var tsconfig_file = "./.okareo/tsconfig.json"
-		var install_file = "./.okareo/install.sh"
-		var node_modules_dir = "./.okareo/node_modules"
-		var dist_dir = "./.okareo/dist"
-
-		config_file, read_err := os.ReadFile(configFileFlag)
-		check(read_err)
+		var config_file_path string = "./.okareo/config.yml"
+		var pkg_file_path = "./.okareo/package.json"
+		var pkg_lock_file_path = "./.okareo/package-lock.json"
+		var tsconfig_file_path = "./.okareo/tsconfig.json"
+		var install_file_path = "./.okareo/install.sh"
+		var node_modules_dir_path = "./.okareo/node_modules"
+		var dist_dir_path = "./.okareo/dist"
 
 		config := Config{}
-		err := yaml.Unmarshal([]byte(config_file), &config)
-		if err != nil {
-			// make errors topical and friendly
-			log.Fatalf("error: %v", err)
-			return
-		}
 
-		var language string = "python"
-		if config.Language != "" {
-			language = config.Language
-		}
-		fmt.Println("Cleaning", language, "files")
-		if language == "python" || files == "ALL" {
-			if fileExists(install_file) {
-				py_err := os.RemoveAll(install_file)
-				if py_err != nil {
-					fmt.Println(py_err)
-				}
-				if isDebug {
-					fmt.Println("Removed", install_file)
-				}
+		config_file, read_err := os.ReadFile(config_file_path)
+		if (read_err != nil) && (read_err.Error() == "open ./.okareo/config.yaml: no such file or directory") {
+			fmt.Println("A config.yml was not found. Continuing with default settings.")
+		} else {
+			err := yaml.Unmarshal([]byte(config_file), &config)
+			if err != nil {
+				// make errors topical and friendly
+				log.Fatalf("error: %v", err)
+				return
 			}
 		}
-		if strings.ToLower(language) == "js" || strings.ToLower(language) == "javascript" || strings.ToLower(language) == "ts" || strings.ToLower(language) == "typescript" || files == "ALL" {
-			/*
-				if fileExists(pkg_file) {
-					p_err := os.Remove(pkg_file)
-					if p_err != nil {
-						fmt.Println("ERROR", pkg_file)
-						fmt.Println(p_err)
-					}
-					if isDebug {
-						fmt.Println("Removed", pkg_file)
-					}
-				}
-			*/
-			if fileExists(pkg_lock_file) {
-				p_err := os.Remove(pkg_lock_file)
+
+		if fileExists(install_file_path) {
+			py_err := os.RemoveAll(install_file_path)
+			if py_err != nil {
+				fmt.Println(py_err)
+			}
+			if isDebug {
+				fmt.Println("Removed", install_file_path)
+			}
+		}
+
+		//if strings.ToLower(language) == "js" || strings.ToLower(language) == "javascript" || strings.ToLower(language) == "ts" || strings.ToLower(language) == "typescript" || force {
+
+		if fileExists(pkg_file_path) {
+			if force {
+				p_err := os.Remove(pkg_file_path)
 				if p_err != nil {
+					fmt.Println("ERROR", pkg_file_path)
 					fmt.Println(p_err)
 				}
 				if isDebug {
-					fmt.Println("Removed", pkg_lock_file)
+					fmt.Println("Removed", pkg_file_path)
+
 				}
-			}
-			if fileExists(tsconfig_file) {
-				if strings.ToLower(language) == "ts" || strings.ToLower(language) == "typescript" || files == "ALL" {
-					tsc_err := os.Remove(tsconfig_file)
-					if tsc_err != nil {
-						fmt.Println(tsc_err)
-					}
-					if isDebug {
-						fmt.Println("Removed", tsconfig_file)
-					}
-				}
-			}
-			if dirExists(node_modules_dir) {
-				nm_err := os.RemoveAll(node_modules_dir)
-				if nm_err != nil {
-					fmt.Println(nm_err)
-				}
-				if isDebug {
-					fmt.Println("Removed", node_modules_dir)
-				}
-			}
-			if dirExists(dist_dir) {
-				d_err := os.RemoveAll(dist_dir)
-				if d_err != nil {
-					fmt.Println(d_err)
-				}
-				if isDebug {
-					fmt.Println("Removed", dist_dir)
-				}
+			} else {
+				fmt.Println("Skipping", pkg_file_path, "use --force ALL to remove")
 			}
 		}
+
+		if fileExists(pkg_lock_file_path) {
+			p_err := os.Remove(pkg_lock_file_path)
+			if p_err != nil {
+				fmt.Println(p_err)
+			}
+			if isDebug {
+				fmt.Println("Removed", pkg_lock_file_path)
+			}
+		}
+		if fileExists(tsconfig_file_path) {
+			tsc_err := os.Remove(tsconfig_file_path)
+			if tsc_err != nil {
+				fmt.Println(tsc_err)
+			}
+			if isDebug {
+				fmt.Println("Removed", tsconfig_file_path)
+			}
+		}
+		if dirExists(node_modules_dir_path) {
+			nm_err := os.RemoveAll(node_modules_dir_path)
+			if nm_err != nil {
+				fmt.Println(nm_err)
+			}
+			if isDebug {
+				fmt.Println("Removed", node_modules_dir_path)
+			}
+		}
+		if dirExists(dist_dir_path) {
+			d_err := os.RemoveAll(dist_dir_path)
+			if d_err != nil {
+				fmt.Println(d_err)
+			}
+			if isDebug {
+				fmt.Println("Removed", dist_dir_path)
+			}
+		}
+		//}
 
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(cleanCmd)
-	cleanCmd.PersistentFlags().String("config", "./.okareo/config.yml", "The Okareo configuration file for the evaluation run.")
-	cleanCmd.PersistentFlags().Bool("debug", false, "See additional stdout to debug your scripts.")
-	cleanCmd.PersistentFlags().String("files", "ALL", "The Okareo flow you want to run.")
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// runCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// runCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	cleanCmd.PersistentFlags().BoolP("debug", "d", false, "See additional stdout to debug your scripts.")
+	cleanCmd.PersistentFlags().BoolP("force", "f", false, "WARNING: This will remove all configuration files in the .okareo directory. Use with caution.")
 }

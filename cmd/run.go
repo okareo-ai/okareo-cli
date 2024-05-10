@@ -148,7 +148,8 @@ var runCmd = &cobra.Command{
 
 		if runConfigFlows {
 			for i := 0; i < len(config.Run.Flows.FlowConfigs); i++ {
-				model := get_model(okareoAPIKey, config.Run.Flows.FlowConfigs[i].Model_id, isDebug)
+				fmt.Println("Running flow: " + config.Run.Flows.FlowConfigs[i].Name)
+				model := get_model(okareoAPIKey, config.Run.Flows.FlowConfigs[i].Name, config.Run.Flows.FlowConfigs[i].Model_id, isDebug)
 				model_type := ""
 				for model_type = range model.Models {
 					break // just pulling the key to see what kind of model this is
@@ -161,6 +162,10 @@ var runCmd = &cobra.Command{
 				config.Run.Flows.FlowConfigs[i].Project_id = project_id
 				testrun := run_config_test(okareoAPIKey, model_type, model_key, config.Run.Flows.FlowConfigs[i], isDebug)
 
+				if (testrun.Name == "") || (testrun.ID == "") {
+					fmt.Println("Error: Test run failed. Likely due to missing or incorrect test type or scenario id.")
+					os.Exit(0)
+				}
 				fmt.Println("Completed: " + testrun.Name)
 				fmt.Println("ID: " + testrun.ID)
 				fmt.Println("Link: " + testrun.AppLink)
@@ -283,7 +288,7 @@ var runCmd = &cobra.Command{
 	},
 }
 
-func get_model(api_token string, model_id string, isDebug bool) *Model {
+func get_model(api_token string, flow_name string, model_id string, isDebug bool) *Model {
 	endpoint := get_endpoint()
 	url := endpoint + "/v0/models_under_test/" + model_id
 	var client http.Client
@@ -291,8 +296,11 @@ func get_model(api_token string, model_id string, isDebug bool) *Model {
 	req.Header.Add("api-key", api_token)
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Print("error", err)
-		fmt.Print(err)
+		fmt.Println("Error: Please verify your OKAREO_API_KEY is valid and available.")
+		if isDebug {
+			fmt.Println(err)
+		}
+		os.Exit(0)
 	}
 
 	model := &Model{}
@@ -301,12 +309,13 @@ func get_model(api_token string, model_id string, isDebug bool) *Model {
 		println("Error decoding model.", derr)
 		panic(derr)
 	}
-	if isDebug {
-		println("Model ID: ", model.ID)
-	}
 
 	if resp.StatusCode != http.StatusCreated {
-		panic(resp.Status)
+		fmt.Println("Error: The model_id for flow '" + flow_name + "' is not valid.")
+		if isDebug {
+			fmt.Println(resp.Status)
+		}
+		os.Exit(0)
 	}
 	return model
 }
@@ -485,6 +494,7 @@ func installOkareoTypescript(debug bool) {
 	{
 		"compilerOptions": {
 		  "module": "commonjs",
+		  "resolveJsonModule": true,
 		  "esModuleInterop": true,
 		  "target": "es6",
 		  "moduleResolution": "node",
@@ -504,7 +514,7 @@ func installOkareoTypescript(debug bool) {
 	// create the package.json file and overwrite if it already exists
 	package_json := []byte(`
 	{
-		"name": "ts-minimal-ci",
+		"name": "ts-recipe",
 		"version": "0.0.1",
 		"description": "Okareo TS Recipe",
 		"main": "index.ts",
@@ -586,7 +596,7 @@ func installOkareoJavascript(debug bool) {
 	// create the package.json file and overwrite if it already exists
 	package_json := []byte(`
 	{
-		"name": "js-minimal-ci",
+		"name": "js-recipe",
 		"version": "0.0.1",
 		"description": "Okareo JS Recipe",
 		"author": "Okareo @ 2024",
