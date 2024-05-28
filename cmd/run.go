@@ -176,7 +176,7 @@ var runCmd = &cobra.Command{
 			if strings.ToLower(language) == "python" || strings.ToLower(language) == "py" {
 				// this is done everytime because the requirements.txt file could change
 				installOkareoPython(isDebug)
-
+				installOkareoPythonCMD(isDebug)
 				entries, err := os.ReadDir(flows_folder)
 				if err != nil {
 					if isDebug {
@@ -420,8 +420,7 @@ func jsonTestDecoder(body string) *TestRun {
 }
 
 func installOkareoPython(debug bool) {
-	req_txt := []byte(`
-# Python requirements to evaluate models with Okareo
+	req_txt := []byte(`# Python requirements to evaluate models with Okareo
 okareo
 `)
 	var req_file string = "./.okareo/requirements.txt"
@@ -434,26 +433,21 @@ okareo
 		check(f_err)
 	}
 
-	//cmd := exec.Command("python3", "-m", "pip", "install", "-r", req_file)
-	cmd := exec.Command("/bin/sh", "-c", "python3 -m pip install -r "+req_file)
-	pipe, out_err := cmd.StdoutPipe()
-	if debug {
-		fmt.Println("Debug: preparing pip install requirements.txt")
+	// create the install file and overwrite if it already exists
+	inst_script := []byte("python3 -m pip install -r ./.okareo/requirements.txt\n")
+	f_err := os.WriteFile("./.okareo/install.sh", inst_script, 0777)
+	check(f_err)
+
+	// run the install script
+	cmd := exec.Command("sh", "./.okareo/install.sh")
+	pipe, err := cmd.StdoutPipe()
+	if err != nil {
+		log.Fatal(err)
 	}
-	if out_err != nil {
-		if debug {
-			fmt.Println("Debug: Install Reqs. Fatal Command Exec")
-		}
-		log.Fatal(out_err)
-	}
-	if start_err := cmd.Start(); start_err != nil {
-		if debug {
-			fmt.Println("Debug: Install Reqs. Fatal Command Start")
-		}
-		log.Fatal(start_err)
+	if err := cmd.Start(); err != nil {
+		log.Fatal(err)
 	}
 	if debug {
-		fmt.Println("Installing Python libraries (including Okareo)")
 		reader := bufio.NewReader(pipe)
 		line, err := reader.ReadString('\n')
 		for err == nil {
@@ -461,13 +455,50 @@ okareo
 			line, err = reader.ReadString('\n')
 		}
 	}
-	cmd.Wait()
-	/*if err := cmd.Wait(); err != nil {
+	if err := cmd.Wait(); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func installOkareoPythonCMD(debug bool) {
+	req_file := "./.okareo/requirements.txt"
+	cmd := exec.Command("/bin/sh", "python3", "-m", "pip", "install", "-r", req_file)
+	pipe, out_err := cmd.StdoutPipe()
+
+	if debug {
+		fmt.Println("Debug CMD: command")
+	}
+
+	if out_err != nil {
 		if debug {
-			fmt.Println("Debug: Install Reqs. Fatal Command Wait")
+			fmt.Println("Debug CMD: Install Reqs. Fatal Command Exec")
+		}
+		log.Fatal(out_err)
+	}
+
+	if start_err := cmd.Start(); start_err != nil {
+		if debug {
+			fmt.Println("Debug CMD: Install Reqs. Fatal Command Start")
+		}
+		log.Fatal(start_err)
+	}
+
+	if debug {
+		fmt.Println("CMD Installing Python libraries (including Okareo)")
+		reader := bufio.NewReader(pipe)
+		line, err := reader.ReadString('\n')
+		for err == nil {
+			fmt.Print(line)
+			line, err = reader.ReadString('\n')
+		}
+	}
+
+	if err := cmd.Wait(); err != nil {
+		if debug {
+			fmt.Println("Debug CMD: Install Reqs. Fatal Command Wait")
 		}
 		log.Fatal(err)
-	}*/
+	}
 }
 
 func doPythonScript(filename string, okareoAPIKey string, projectId string, run_name string, isDebug bool) {
