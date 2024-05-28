@@ -429,19 +429,26 @@ okareo
 		if debug {
 			fmt.Println("Debug: requirements.txt not found. Creating one.")
 		}
-		f_err := os.WriteFile(req_file, req_txt, 0777)
+		f_err := os.WriteFile(req_file, req_txt, 0644)
 		check(f_err)
-		fmt.Println("Requirements file created.")
+		if debug {
+			fmt.Println("Requirements file created.")
+		}
 	} else {
-		fmt.Println("Requirements file present.")
+		if debug {
+			fmt.Println("Requirements file present.")
+		}
 	}
 	// create the install file and overwrite if it already exists
-	inst_script := []byte("python3 -m pip install -r ./.okareo/requirements.txt\n")
+	/*inst_script := []byte("python3 -m pip install -r ./.okareo/requirements.txt\n")
 	f_err := os.WriteFile("./.okareo/install.sh", inst_script, 0777)
 	check(f_err)
-
 	// run the install script
 	cmd := exec.Command("sh", "./.okareo/install.sh")
+	*/
+	// run the pip install command
+
+	cmd := exec.Command("/bin/sh", "python3", "-m", "pip", "install", "-r", req_file)
 	pipe, err := cmd.StdoutPipe()
 	if err != nil {
 		log.Fatal(err)
@@ -461,48 +468,6 @@ okareo
 		log.Fatal(err)
 	}
 }
-
-/*
-func installOkareoPythonCMD(debug bool) {
-	req_file := "./.okareo/requirements.txt"
-	cmd := exec.Command("/bin/sh", "python3", "-m", "pip", "install", "-r", req_file)
-	pipe, out_err := cmd.StdoutPipe()
-
-	if debug {
-		fmt.Println("Debug CMD: command")
-	}
-
-	if out_err != nil {
-		if debug {
-			fmt.Println("Debug CMD: Install Reqs. Fatal Command Exec")
-		}
-		log.Fatal(out_err)
-	}
-
-	if start_err := cmd.Start(); start_err != nil {
-		if debug {
-			fmt.Println("Debug CMD: Install Reqs. Fatal Command Start")
-		}
-		log.Fatal(start_err)
-	}
-
-	if debug {
-		fmt.Println("CMD Installing Python libraries (including Okareo)")
-		reader := bufio.NewReader(pipe)
-		line, err := reader.ReadString('\n')
-		for err == nil {
-			fmt.Print(line)
-			line, err = reader.ReadString('\n')
-		}
-	}
-
-	if err := cmd.Wait(); err != nil {
-		if debug {
-			fmt.Println("Debug CMD: Install Reqs. Fatal Command Wait")
-		}
-		log.Fatal(err)
-	}
-}*/
 
 func doPythonScript(filename string, okareoAPIKey string, projectId string, run_name string, isDebug bool) {
 	cmd := exec.Command("python3", filename)
