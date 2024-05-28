@@ -434,23 +434,23 @@ okareo
 		check(f_err)
 	}
 
-	cmd := exec.Command("python3", "-m", "pip", "install", "-r", req_file)
-	//cmd := exec.Command("/bin/sh", "-c", "python3 -m pip install -r "+req_file)
-	pipe, err := cmd.StdoutPipe()
+	//cmd := exec.Command("python3", "-m", "pip", "install", "-r", req_file)
+	cmd := exec.Command("/bin/sh", "-c", "python3 -m pip install -r "+req_file)
+	pipe, out_err := cmd.StdoutPipe()
 	if debug {
 		fmt.Println("Debug: preparing pip install requirements.txt")
 	}
-	if err != nil {
+	if out_err != nil {
 		if debug {
 			fmt.Println("Debug: Install Reqs. Fatal Command Exec")
 		}
-		log.Fatal(err)
+		log.Fatal(out_err)
 	}
-	if err := cmd.Start(); err != nil {
+	if start_err := cmd.Start(); start_err != nil {
 		if debug {
 			fmt.Println("Debug: Install Reqs. Fatal Command Start")
 		}
-		log.Fatal(err)
+		log.Fatal(start_err)
 	}
 	if debug {
 		fmt.Println("Installing Python libraries (including Okareo)")
@@ -461,12 +461,13 @@ okareo
 			line, err = reader.ReadString('\n')
 		}
 	}
-	if err := cmd.Wait(); err != nil {
+	cmd.Wait()
+	/*if err := cmd.Wait(); err != nil {
 		if debug {
 			fmt.Println("Debug: Install Reqs. Fatal Command Wait")
 		}
 		log.Fatal(err)
-	}
+	}*/
 }
 
 func doPythonScript(filename string, okareoAPIKey string, projectId string, run_name string, isDebug bool) {
