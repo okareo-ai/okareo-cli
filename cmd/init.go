@@ -132,7 +132,7 @@ run:
 		}
 		// at the end init the env for use in run
 		if strings.ToLower(language) == "python" || strings.ToLower(language) == "py" {
-			installOkareoPython(true, isDebug)
+			installOkareoPython(isDebug)
 
 		} else if strings.ToLower(language) == "javascript" || strings.ToLower(language) == "js" {
 			installOkareoJavascript(isDebug)

@@ -98,7 +98,6 @@ var runCmd = &cobra.Command{
 	Long:  `Okareo CLI 'runs' can include multiple flows that perform a variety of tasks from scenario generation to model evaluation.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		isDebug, _ := cmd.Flags().GetBool("debug")
-		doUpgrade, _ := cmd.Flags().GetBool("upgrade")
 		flowFileFlag, _ := cmd.Flags().GetString("file")
 		configFileFlag, _ := cmd.Flags().GetString("config")
 
@@ -175,10 +174,8 @@ var runCmd = &cobra.Command{
 
 		if runScripts {
 			if strings.ToLower(language) == "python" || strings.ToLower(language) == "py" {
-				useLatest, _ := cmd.Flags().GetBool("latest")
-				if useLatest {
-					installOkareoPython(doUpgrade, isDebug)
-				}
+				// this is done everytime because the requirements.txt file could change
+				installOkareoPython(isDebug)
 
 				entries, err := os.ReadDir(flows_folder)
 				if err != nil {
@@ -419,17 +416,19 @@ func jsonTestDecoder(body string) *TestRun {
 	return testrun
 }
 
-func installOkareoPython(doUpgrade bool, debug bool) {
-	// create the install file and overwrite if it already exists
-	inst_script := []byte("python3 -m pip install \"okareo\"\n")
-	if doUpgrade {
-		inst_script = []byte("python3 -m pip install --upgrade \"okareo\"\n")
+func installOkareoPython(debug bool) {
+	req_txt := []byte(`
+	# Python requirements to evaluate models with Okareo
+	okareo
+	`)
+	var req_file string = "./.okareo/requirements.txt"
+	_, err_req := os.Stat(req_file)
+	if os.IsNotExist(err_req) {
+		f_err := os.WriteFile(req_file, req_txt, 0644)
+		check(f_err)
 	}
-	f_err := os.WriteFile("./.okareo/install.sh", inst_script, 0777)
-	check(f_err)
 
-	// run the install script
-	cmd := exec.Command("sh", "./.okareo/install.sh")
+	cmd := exec.Command("sh", "pip", "install", "-r", req_file)
 	pipe, err := cmd.StdoutPipe()
 	if err != nil {
 		log.Fatal(err)
@@ -438,6 +437,7 @@ func installOkareoPython(doUpgrade bool, debug bool) {
 		log.Fatal(err)
 	}
 	if debug {
+		fmt.Println("Installing Python libraries (including Okareo)")
 		reader := bufio.NewReader(pipe)
 		line, err := reader.ReadString('\n')
 		for err == nil {
@@ -684,6 +684,4 @@ func init() {
 	runCmd.PersistentFlags().StringP("file", "f", "ALL", "The Okareo flow script you want to run.")
 	runCmd.PersistentFlags().StringP("config", "c", "./.okareo/config.yml", "The Okareo configuration file for the evaluation run.")
 	runCmd.PersistentFlags().BoolP("debug", "d", false, "See additional stdout to debug your flows.")
-	runCmd.PersistentFlags().BoolP("upgrade", "u", false, "Force upgrade to the latest Okareo library. Currently only supported for python.")
-	runCmd.PersistentFlags().BoolP("latest", "l", true, "Install the latest version of Okareo. False will require you to maintain okareo yourself.")
 }

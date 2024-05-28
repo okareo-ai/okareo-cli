@@ -20,7 +20,6 @@ A tool for interacting with the Okareo API
         - edit_distance.py
 
 ## Flags on Okareo
-- '-latest=false' Okareo will install okareo on every run by default.  If you want to control version, set this to false.
 - '-file=ABC' This allows you to use okareo to run a specific file
 - '-debug' If you are unsure what is happening in okareo, you can use this to see more
 
