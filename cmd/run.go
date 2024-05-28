@@ -179,6 +179,9 @@ var runCmd = &cobra.Command{
 
 				entries, err := os.ReadDir(flows_folder)
 				if err != nil {
+					if isDebug {
+						fmt.Println("Debug: Flows folder not found.")
+					}
 					log.Fatal(err)
 				}
 
@@ -424,16 +427,28 @@ func installOkareoPython(debug bool) {
 	var req_file string = "./.okareo/requirements.txt"
 	_, err_req := os.Stat(req_file)
 	if os.IsNotExist(err_req) {
+		if debug {
+			fmt.Println("Debug: requirements.txt not found. Creating one.")
+		}
 		f_err := os.WriteFile(req_file, req_txt, 0644)
 		check(f_err)
 	}
 
 	cmd := exec.Command("sh", "pip", "install", "-r", req_file)
 	pipe, err := cmd.StdoutPipe()
+	if debug {
+		fmt.Println("Debug: prepare to gather pip requirements.")
+	}
 	if err != nil {
+		if debug {
+			fmt.Println("Debug: Fatal 1")
+		}
 		log.Fatal(err)
 	}
 	if err := cmd.Start(); err != nil {
+		if debug {
+			fmt.Println("Debug: Fatal 2")
+		}
 		log.Fatal(err)
 	}
 	if debug {
@@ -446,6 +461,9 @@ func installOkareoPython(debug bool) {
 		}
 	}
 	if err := cmd.Wait(); err != nil {
+		if debug {
+			fmt.Println("Debug: Fatal 3")
+		}
 		log.Fatal(err)
 	}
 }
@@ -455,13 +473,22 @@ func doPythonScript(filename string, okareoAPIKey string, projectId string, run_
 
 	// Setup the environment for the caller
 	cmd.Env = os.Environ()
-	if run_name != "" {
-		cmd.Env = append(cmd.Env, "OKAREO_RUN_ID="+run_name)
-	}
 	if okareoAPIKey != "" {
+		if isDebug {
+			fmt.Println("Debug: Setting OKAREO_API_KEY.")
+		}
 		cmd.Env = append(cmd.Env, "OKAREO_API_KEY="+okareoAPIKey)
 	}
+	if run_name != "" {
+		if isDebug {
+			fmt.Println("Debug: Setting OKAREO_RUN_ID.")
+		}
+		cmd.Env = append(cmd.Env, "OKAREO_RUN_ID="+run_name)
+	}
 	if projectId != "" {
+		if isDebug {
+			fmt.Println("Debug: Setting PROJECT_ID.")
+		}
 		cmd.Env = append(cmd.Env, "PROJECT_ID="+projectId)
 	}
 
