@@ -176,7 +176,7 @@ var runCmd = &cobra.Command{
 			if strings.ToLower(language) == "python" || strings.ToLower(language) == "py" {
 				// this is done everytime because the requirements.txt file could change
 				installOkareoPython(isDebug)
-				installOkareoPythonCMD(isDebug)
+				//installOkareoPythonCMD(isDebug)
 				entries, err := os.ReadDir(flows_folder)
 				if err != nil {
 					if isDebug {
@@ -431,8 +431,10 @@ okareo
 		}
 		f_err := os.WriteFile(req_file, req_txt, 0777)
 		check(f_err)
+		fmt.Println("Requirements file created.")
+	} else {
+		fmt.Println("Requirements file present.")
 	}
-
 	// create the install file and overwrite if it already exists
 	inst_script := []byte("python3 -m pip install -r ./.okareo/requirements.txt\n")
 	f_err := os.WriteFile("./.okareo/install.sh", inst_script, 0777)
@@ -460,6 +462,7 @@ okareo
 	}
 }
 
+/*
 func installOkareoPythonCMD(debug bool) {
 	req_file := "./.okareo/requirements.txt"
 	cmd := exec.Command("/bin/sh", "python3", "-m", "pip", "install", "-r", req_file)
@@ -499,7 +502,7 @@ func installOkareoPythonCMD(debug bool) {
 		}
 		log.Fatal(err)
 	}
-}
+}*/
 
 func doPythonScript(filename string, okareoAPIKey string, projectId string, run_name string, isDebug bool) {
 	cmd := exec.Command("python3", filename)
