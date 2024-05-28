@@ -434,7 +434,8 @@ okareo
 		check(f_err)
 	}
 
-	cmd := exec.Command("/bin/sh", "-c", "python3 -m pip install -r "+req_file)
+	cmd := exec.Command("python3", "-m", "pip", "install", "-r", req_file)
+	//cmd := exec.Command("/bin/sh", "-c", "python3 -m pip install -r "+req_file)
 	pipe, err := cmd.StdoutPipe()
 	if debug {
 		fmt.Println("Debug: preparing pip install requirements.txt")
