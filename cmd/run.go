@@ -434,37 +434,37 @@ okareo
 		check(f_err)
 	}
 
-	cmd := exec.Command("/bin/sh", "-c", "pip install -r "+req_file)
-	pipe, cmd_err := cmd.StdoutPipe()
+	cmd := exec.Command("/bin/sh", "-c", "python3 -m pip install -r "+req_file)
+	pipe, err := cmd.StdoutPipe()
 	if debug {
-		fmt.Println("Debug: prepare to gather pip requirements.")
+		fmt.Println("Debug: preparing pip install requirements.txt")
 	}
-	if cmd_err != nil {
+	if err != nil {
 		if debug {
-			fmt.Println("Debug: Fatal 1")
+			fmt.Println("Debug: Install Reqs. Fatal Command Exec")
 		}
-		log.Fatal(cmd_err)
+		log.Fatal(err)
 	}
-	if start_err := cmd.Start(); start_err != nil {
+	if err := cmd.Start(); err != nil {
 		if debug {
-			fmt.Println("Debug: Fatal 2")
+			fmt.Println("Debug: Install Reqs. Fatal Command Start")
 		}
-		log.Fatal(start_err)
+		log.Fatal(err)
 	}
 	if debug {
 		fmt.Println("Installing Python libraries (including Okareo)")
 		reader := bufio.NewReader(pipe)
-		line, read_err := reader.ReadString('\n')
-		for read_err == nil {
+		line, err := reader.ReadString('\n')
+		for err == nil {
 			fmt.Print(line)
-			line, read_err = reader.ReadString('\n')
+			line, err = reader.ReadString('\n')
 		}
 	}
-	if wait_err := cmd.Wait(); wait_err != nil {
+	if err := cmd.Wait(); err != nil {
 		if debug {
-			fmt.Println("Debug: Fatal 3")
+			fmt.Println("Debug: Install Reqs. Fatal Command Wait")
 		}
-		log.Fatal(wait_err)
+		log.Fatal(err)
 	}
 }
 
