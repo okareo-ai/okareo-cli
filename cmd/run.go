@@ -429,7 +429,7 @@ okareo
 		if debug {
 			fmt.Println("Debug: requirements.txt not found. Creating one.")
 		}
-		f_err := os.WriteFile(req_file, req_txt, 0644)
+		f_err := os.WriteFile(req_file, req_txt, 0777)
 		check(f_err)
 	}
 
@@ -728,6 +728,9 @@ func doJSScript(filename string, okareoAPIKey string, projectId string, run_name
 	}
 
 	if err := cmd.Wait(); err != nil {
+		if isDebug {
+			fmt.Println("Error: ", err)
+		}
 		log.Fatal(err)
 	}
 }
