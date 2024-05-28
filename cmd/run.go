@@ -448,23 +448,43 @@ okareo
 	*/
 	// run the pip install command
 
-	cmd := exec.Command("/bin/sh", "python3", "-m", "pip", "install", "-r", req_file)
-	pipe, err := cmd.StdoutPipe()
+	pip_cmd := exec.Command("python3", "-m", "pip", "install", "--upgrade", "pip")
+	pip_pipe, err := pip_cmd.StdoutPipe()
 	if err != nil {
 		log.Fatal(err)
 	}
-	if err := cmd.Start(); err != nil {
+	if err := pip_cmd.Start(); err != nil {
 		log.Fatal(err)
 	}
 	if debug {
-		reader := bufio.NewReader(pipe)
+		reader := bufio.NewReader(pip_pipe)
 		line, err := reader.ReadString('\n')
 		for err == nil {
 			fmt.Print(line)
 			line, err = reader.ReadString('\n')
 		}
 	}
-	if err := cmd.Wait(); err != nil {
+	if err := pip_cmd.Wait(); err != nil {
+		log.Fatal(err)
+	}
+
+	req_cmd := exec.Command("pip", "install", "-r", req_file)
+	cmd_pipe, err := req_cmd.StdoutPipe()
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err := req_cmd.Start(); err != nil {
+		log.Fatal(err)
+	}
+	if debug {
+		reader := bufio.NewReader(cmd_pipe)
+		line, err := reader.ReadString('\n')
+		for err == nil {
+			fmt.Print(line)
+			line, err = reader.ReadString('\n')
+		}
+	}
+	if err := req_cmd.Wait(); err != nil {
 		log.Fatal(err)
 	}
 }
