@@ -439,36 +439,29 @@ okareo
 			fmt.Println("Requirements file present.")
 		}
 	}
-	// create the install file and overwrite if it already exists
-	/*inst_script := []byte("python3 -m pip install -r ./.okareo/requirements.txt\n")
-	f_err := os.WriteFile("./.okareo/install.sh", inst_script, 0777)
-	check(f_err)
-	// run the install script
-	cmd := exec.Command("sh", "./.okareo/install.sh")
-	*/
-	// run the pip install command
-
-	pip_cmd := exec.Command("python3", "-m", "pip", "install", "--upgrade", "pip")
-	pip_pipe, err := pip_cmd.StdoutPipe()
-	if err != nil {
-		log.Fatal(err)
-	}
-	if err := pip_cmd.Start(); err != nil {
-		log.Fatal(err)
-	}
-	if debug {
-		reader := bufio.NewReader(pip_pipe)
-		line, err := reader.ReadString('\n')
-		for err == nil {
-			fmt.Print(line)
-			line, err = reader.ReadString('\n')
+	/*
+		pip_cmd := exec.Command("python3", "-m", "pip", "install", "--upgrade", "pip")
+		pip_pipe, err := pip_cmd.StdoutPipe()
+		if err != nil {
+			log.Fatal(err)
 		}
-	}
-	if err := pip_cmd.Wait(); err != nil {
-		log.Fatal(err)
-	}
+		if err := pip_cmd.Start(); err != nil {
+			log.Fatal(err)
+		}
+		if debug {
+			reader := bufio.NewReader(pip_pipe)
+			line, err := reader.ReadString('\n')
+			for err == nil {
+				fmt.Print(line)
+				line, err = reader.ReadString('\n')
+			}
+		}
+		if err := pip_cmd.Wait(); err != nil {
+			log.Fatal(err)
+		}
+	*/
 
-	req_cmd := exec.Command("pip", "install", "-r", req_file)
+	req_cmd := exec.Command("python3", "-m", "pip", "install", "-r", req_file)
 	cmd_pipe, err := req_cmd.StdoutPipe()
 	if err != nil {
 		log.Fatal(err)
