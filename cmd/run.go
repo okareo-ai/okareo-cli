@@ -421,9 +421,9 @@ func jsonTestDecoder(body string) *TestRun {
 
 func installOkareoPython(debug bool) {
 	req_txt := []byte(`
-	# Python requirements to evaluate models with Okareo
-	okareo
-	`)
+# Python requirements to evaluate models with Okareo
+okareo
+`)
 	var req_file string = "./.okareo/requirements.txt"
 	_, err_req := os.Stat(req_file)
 	if os.IsNotExist(err_req) {
@@ -434,7 +434,7 @@ func installOkareoPython(debug bool) {
 		check(f_err)
 	}
 
-	cmd := exec.Command("sh", "pip", "install", "-r", req_file)
+	cmd := exec.Command("/bin/sh", "-c", "pip install -r "+req_file)
 	pipe, err := cmd.StdoutPipe()
 	if debug {
 		fmt.Println("Debug: prepare to gather pip requirements.")
