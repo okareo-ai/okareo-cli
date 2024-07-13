@@ -100,6 +100,7 @@ var runCmd = &cobra.Command{
 		isDebug, _ := cmd.Flags().GetBool("debug")
 		flowFileFlag, _ := cmd.Flags().GetString("file")
 		configFileFlag, _ := cmd.Flags().GetString("config")
+		outputFile, _ := cmd.Flags().GetString("outputFile")
 
 		config_file, read_err := os.ReadFile(configFileFlag)
 		check(read_err)
@@ -194,7 +195,7 @@ var runCmd = &cobra.Command{
 								fmt.Println("Match file:", e.Name())
 							}
 							foundFlow = true
-							doPythonScript(flows_folder+e.Name(), okareoAPIKey, projectId, run_name, isDebug)
+							doPythonScript(flows_folder+e.Name(), okareoAPIKey, projectId, run_name, outputFile, isDebug)
 						}
 					} else {
 						match, _ := regexp.MatchString(filePattern+"$", e.Name())
@@ -203,7 +204,7 @@ var runCmd = &cobra.Command{
 						}
 						if match {
 							fmt.Println("Running .okareo/flows/" + e.Name())
-							doPythonScript(flows_folder+e.Name(), okareoAPIKey, projectId, run_name, isDebug)
+							doPythonScript(flows_folder+e.Name(), okareoAPIKey, projectId, run_name, outputFile, isDebug)
 						}
 					}
 				}
@@ -230,7 +231,7 @@ var runCmd = &cobra.Command{
 							}
 							foundFlow = true
 							var distFile string = strings.Split(e.Name(), ".")[0] + ".js"
-							doJSScript(dist_folder+distFile, okareoAPIKey, projectId, run_name, isDebug)
+							doJSScript(dist_folder+distFile, okareoAPIKey, projectId, run_name, outputFile, isDebug)
 						}
 					} else {
 						match, _ := regexp.MatchString(filePattern+"$", e.Name())
@@ -240,7 +241,7 @@ var runCmd = &cobra.Command{
 						}
 						if match {
 							fmt.Println("Running .okareo/flows/" + e.Name())
-							doJSScript(dist_folder+distFile, okareoAPIKey, projectId, run_name, isDebug)
+							doJSScript(dist_folder+distFile, okareoAPIKey, projectId, run_name, outputFile, isDebug)
 						}
 					}
 				}
@@ -265,7 +266,7 @@ var runCmd = &cobra.Command{
 								fmt.Println("Match file:", e.Name())
 							}
 							foundFlow = true
-							doJSScript(flows_folder+e.Name(), okareoAPIKey, projectId, run_name, isDebug)
+							doJSScript(flows_folder+e.Name(), okareoAPIKey, projectId, run_name, outputFile, isDebug)
 						}
 					} else {
 						match, _ := regexp.MatchString(filePattern+"$", e.Name())
@@ -274,7 +275,7 @@ var runCmd = &cobra.Command{
 						}
 						if match {
 							fmt.Println("Running .okareo/flows/" + e.Name())
-							doJSScript(flows_folder+e.Name(), okareoAPIKey, projectId, run_name, isDebug)
+							doJSScript(flows_folder+e.Name(), okareoAPIKey, projectId, run_name, outputFile, isDebug)
 						}
 					}
 				}
@@ -482,7 +483,7 @@ okareo
 	}
 }
 
-func doPythonScript(filename string, okareoAPIKey string, projectId string, run_name string, isDebug bool) {
+func doPythonScript(filename string, okareoAPIKey string, projectId string, run_name string, outputFile string, isDebug bool) {
 	cmd := exec.Command("python3", filename)
 
 	// Setup the environment for the caller
@@ -504,6 +505,12 @@ func doPythonScript(filename string, okareoAPIKey string, projectId string, run_
 			fmt.Println("Debug: Setting PROJECT_ID.")
 		}
 		cmd.Env = append(cmd.Env, "PROJECT_ID="+projectId)
+	}
+	if outputFile != "" {
+		if isDebug {
+			fmt.Println("Debug: Setting OKAREO_JSON_OUTPUT_FILE.")
+		}
+		cmd.Env = append(cmd.Env, "OKAREO_JSON_OUTPUT_FILE="+outputFile)
 	}
 
 	// setup the output handling and call the script
@@ -676,7 +683,7 @@ func installOkareoJavascript(debug bool) {
 	}
 }
 
-func doJSScript(filename string, okareoAPIKey string, projectId string, run_name string, isDebug bool) {
+func doJSScript(filename string, okareoAPIKey string, projectId string, run_name string, outputFile string, isDebug bool) {
 	cmd := exec.Command("node", filename)
 
 	// Setup the environment for the caller
@@ -689,6 +696,9 @@ func doJSScript(filename string, okareoAPIKey string, projectId string, run_name
 	}
 	if projectId != "" {
 		cmd.Env = append(cmd.Env, "PROJECT_ID="+projectId)
+	}
+	if outputFile != "" {
+		cmd.Env = append(cmd.Env, "OKAREO_JSON_OUTPUT_FILE="+outputFile)
 	}
 
 	// setup the output handling and call the script
@@ -727,5 +737,6 @@ func init() {
 	rootCmd.AddCommand(runCmd)
 	runCmd.PersistentFlags().StringP("file", "f", "ALL", "The Okareo flow script you want to run.")
 	runCmd.PersistentFlags().StringP("config", "c", "./.okareo/config.yml", "The Okareo configuration file for the evaluation run.")
+	runCmd.PersistentFlags().StringP("outputFile", "o", "", "The JSON eval report file. If specified will output eval report to file name provided.")
 	runCmd.PersistentFlags().BoolP("debug", "d", false, "See additional stdout to debug your flows.")
 }
