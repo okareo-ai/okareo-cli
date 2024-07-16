@@ -237,7 +237,7 @@ var runCmd = &cobra.Command{
 							}
 							foundFlow = true
 							var distFile string = strings.Split(e.Name(), ".")[0] + ".js"
-							doJSScript(dist_folder+"flows/"+distFile, okareoAPIKey, projectId, run_name, outputFile, reports_dir_path, isDebug)
+							doJSScript(dist_folder+distFile, okareoAPIKey, projectId, run_name, outputFile, reports_dir_path, isDebug)
 						}
 					} else {
 						match, _ := regexp.MatchString(filePattern+"$", e.Name())
@@ -247,7 +247,7 @@ var runCmd = &cobra.Command{
 						}
 						if match {
 							fmt.Println("Running .okareo/flows/" + e.Name())
-							doJSScript(dist_folder+"flows/"+distFile, okareoAPIKey, projectId, run_name, outputFile, reports_dir_path, isDebug)
+							doJSScript(dist_folder+distFile, okareoAPIKey, projectId, run_name, outputFile, reports_dir_path, isDebug)
 						}
 					}
 				}
