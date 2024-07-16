@@ -28,6 +28,7 @@ var cleanCmd = &cobra.Command{
 		var install_file_path = "./.okareo/install.sh"
 		var node_modules_dir_path = "./.okareo/node_modules"
 		var dist_dir_path = "./.okareo/dist"
+		var reports_dir_path = "./.okareo/reports"
 
 		config := Config{}
 
@@ -105,6 +106,15 @@ var cleanCmd = &cobra.Command{
 			}
 			if isDebug {
 				fmt.Println("Removed", dist_dir_path)
+			}
+		}
+		if dirExists(reports_dir_path) {
+			d_err := os.RemoveAll(reports_dir_path)
+			if d_err != nil {
+				fmt.Println(d_err)
+			}
+			if isDebug {
+				fmt.Println("Removed", reports_dir_path)
 			}
 		}
 		//}

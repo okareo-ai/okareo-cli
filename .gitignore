@@ -29,6 +29,6 @@ go.work
 **/package.json
 **/tsconfig.json
 
-.okareo
+**/.okareo
 
 dist/

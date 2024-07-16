@@ -100,10 +100,16 @@ var runCmd = &cobra.Command{
 		isDebug, _ := cmd.Flags().GetBool("debug")
 		flowFileFlag, _ := cmd.Flags().GetString("file")
 		configFileFlag, _ := cmd.Flags().GetString("config")
+		reports_dir_path, _ := cmd.Flags().GetString("reports")
 		outputFile, _ := cmd.Flags().GetString("outputFile")
 
 		config_file, read_err := os.ReadFile(configFileFlag)
 		check(read_err)
+
+		if (reports_dir_path != "") && (!strings.HasPrefix(reports_dir_path, "/")) {
+			reports_dir_path = "./.okareo/" + reports_dir_path + "/"
+		}
+		prepare_reports_dir(reports_dir_path, isDebug)
 
 		config := Config{}
 		err := yaml.Unmarshal([]byte(config_file), &config)
@@ -160,7 +166,7 @@ var runCmd = &cobra.Command{
 				}
 				project_id := model.ProjectID
 				config.Run.Flows.FlowConfigs[i].Project_id = project_id
-				testrun := run_config_test(okareoAPIKey, model_type, model_key, config.Run.Flows.FlowConfigs[i], isDebug)
+				testrun := run_config_test(okareoAPIKey, model_type, model_key, config.Run.Flows.FlowConfigs[i], reports_dir_path, isDebug)
 
 				if (testrun.Name == "") || (testrun.ID == "") {
 					fmt.Println("Error: Test run failed. Likely due to missing or incorrect test type or scenario id.")
@@ -195,7 +201,7 @@ var runCmd = &cobra.Command{
 								fmt.Println("Match file:", e.Name())
 							}
 							foundFlow = true
-							doPythonScript(flows_folder+e.Name(), okareoAPIKey, projectId, run_name, outputFile, isDebug)
+							doPythonScript(flows_folder+e.Name(), okareoAPIKey, projectId, run_name, outputFile, reports_dir_path, isDebug)
 						}
 					} else {
 						match, _ := regexp.MatchString(filePattern+"$", e.Name())
@@ -204,7 +210,7 @@ var runCmd = &cobra.Command{
 						}
 						if match {
 							fmt.Println("Running .okareo/flows/" + e.Name())
-							doPythonScript(flows_folder+e.Name(), okareoAPIKey, projectId, run_name, outputFile, isDebug)
+							doPythonScript(flows_folder+e.Name(), okareoAPIKey, projectId, run_name, outputFile, reports_dir_path, isDebug)
 						}
 					}
 				}
@@ -231,7 +237,7 @@ var runCmd = &cobra.Command{
 							}
 							foundFlow = true
 							var distFile string = strings.Split(e.Name(), ".")[0] + ".js"
-							doJSScript(dist_folder+distFile, okareoAPIKey, projectId, run_name, outputFile, isDebug)
+							doJSScript(dist_folder+"flows/"+distFile, okareoAPIKey, projectId, run_name, outputFile, reports_dir_path, isDebug)
 						}
 					} else {
 						match, _ := regexp.MatchString(filePattern+"$", e.Name())
@@ -241,7 +247,7 @@ var runCmd = &cobra.Command{
 						}
 						if match {
 							fmt.Println("Running .okareo/flows/" + e.Name())
-							doJSScript(dist_folder+distFile, okareoAPIKey, projectId, run_name, outputFile, isDebug)
+							doJSScript(dist_folder+"flows/"+distFile, okareoAPIKey, projectId, run_name, outputFile, reports_dir_path, isDebug)
 						}
 					}
 				}
@@ -266,7 +272,7 @@ var runCmd = &cobra.Command{
 								fmt.Println("Match file:", e.Name())
 							}
 							foundFlow = true
-							doJSScript(flows_folder+e.Name(), okareoAPIKey, projectId, run_name, outputFile, isDebug)
+							doJSScript(flows_folder+e.Name(), okareoAPIKey, projectId, run_name, outputFile, reports_dir_path, isDebug)
 						}
 					} else {
 						match, _ := regexp.MatchString(filePattern+"$", e.Name())
@@ -275,7 +281,7 @@ var runCmd = &cobra.Command{
 						}
 						if match {
 							fmt.Println("Running .okareo/flows/" + e.Name())
-							doJSScript(flows_folder+e.Name(), okareoAPIKey, projectId, run_name, outputFile, isDebug)
+							doJSScript(flows_folder+e.Name(), okareoAPIKey, projectId, run_name, outputFile, reports_dir_path, isDebug)
 						}
 					}
 				}
@@ -287,6 +293,23 @@ var runCmd = &cobra.Command{
 			}
 		}
 	},
+}
+
+func prepare_reports_dir(reports_dir_path string, isDebug bool) {
+	if dirExists(reports_dir_path) {
+		d_err := os.RemoveAll(reports_dir_path)
+		if d_err != nil {
+			fmt.Println(d_err)
+		}
+		if isDebug {
+			fmt.Println("Cleaned reports from:", reports_dir_path)
+		}
+	}
+	err := os.MkdirAll(reports_dir_path, 0777)
+	if err != nil {
+		fmt.Println("Error creating reports directory.")
+		os.Exit(0)
+	}
 }
 
 func get_model(api_token string, flow_name string, model_id string, isDebug bool) *Model {
@@ -321,7 +344,7 @@ func get_model(api_token string, flow_name string, model_id string, isDebug bool
 	return model
 }
 
-func run_config_test(api_token string, model_type string, model_key string, flow *FlowConfig, isDebug bool) *TestRun {
+func run_config_test(api_token string, model_type string, model_key string, flow *FlowConfig, reports_dir_path string, isDebug bool) *TestRun {
 	endpoint := get_endpoint()
 	url := endpoint + "/v0/test_run"
 	var client http.Client
@@ -368,15 +391,26 @@ func run_config_test(api_token string, model_type string, model_key string, flow
 		log.Fatal(err)
 	}
 	resultBodyString := string(resultBody)
-	if isDebug {
-		var prettyJSON bytes.Buffer
-		error := json.Indent(&prettyJSON, resultBody, "", "\t")
-		if error != nil {
-			log.Println("JSON parse error: ", error)
-			return nil
-		}
-		log.Println("Test Run:", prettyJSON.String())
+	var prettyJSON bytes.Buffer
+	error := json.Indent(&prettyJSON, resultBody, "", "\t")
+	if error != nil {
+		log.Println("JSON parse error: ", error)
+		return nil
 	}
+	var prettyJSONString = prettyJSON.String()
+	if isDebug {
+		log.Println("Test Run:", prettyJSONString)
+	}
+
+	var config_report_file_path string = reports_dir_path + strings.Replace(flow.Name, " ", "_", -1) + ".json"
+	_, err_config_report := os.Stat(reports_dir_path)
+	if os.IsNotExist(err_config_report) {
+		fmt.Println("Report location error: ", err_config_report)
+	} else {
+		ftsc_err := os.WriteFile(config_report_file_path, []byte(prettyJSONString), 0777)
+		check(ftsc_err)
+	}
+
 	testrun := jsonTestDecoder(resultBodyString)
 	return testrun
 }
@@ -483,7 +517,7 @@ okareo
 	}
 }
 
-func doPythonScript(filename string, okareoAPIKey string, projectId string, run_name string, outputFile string, isDebug bool) {
+func doPythonScript(filename string, okareoAPIKey string, projectId string, run_name string, outputFile string, reports_dir_path string, isDebug bool) {
 	cmd := exec.Command("python3", filename)
 
 	// Setup the environment for the caller
@@ -511,6 +545,12 @@ func doPythonScript(filename string, okareoAPIKey string, projectId string, run_
 			fmt.Println("Debug: Setting OKAREO_JSON_OUTPUT_FILE.")
 		}
 		cmd.Env = append(cmd.Env, "OKAREO_JSON_OUTPUT_FILE="+outputFile)
+	}
+	if reports_dir_path != "" {
+		if isDebug {
+			fmt.Println("Debug: Setting OKAREO_REPORT_DIR.")
+		}
+		cmd.Env = append(cmd.Env, "OKAREO_REPORT_DIR="+reports_dir_path)
 	}
 
 	// setup the output handling and call the script
@@ -683,7 +723,7 @@ func installOkareoJavascript(debug bool) {
 	}
 }
 
-func doJSScript(filename string, okareoAPIKey string, projectId string, run_name string, outputFile string, isDebug bool) {
+func doJSScript(filename string, okareoAPIKey string, projectId string, run_name string, outputFile string, reports_dir_path string, isDebug bool) {
 	cmd := exec.Command("node", filename)
 
 	// Setup the environment for the caller
@@ -699,6 +739,9 @@ func doJSScript(filename string, okareoAPIKey string, projectId string, run_name
 	}
 	if outputFile != "" {
 		cmd.Env = append(cmd.Env, "OKAREO_JSON_OUTPUT_FILE="+outputFile)
+	}
+	if reports_dir_path != "" {
+		cmd.Env = append(cmd.Env, "OKAREO_REPORT_DIR="+reports_dir_path)
 	}
 
 	// setup the output handling and call the script
@@ -737,6 +780,7 @@ func init() {
 	rootCmd.AddCommand(runCmd)
 	runCmd.PersistentFlags().StringP("file", "f", "ALL", "The Okareo flow script you want to run.")
 	runCmd.PersistentFlags().StringP("config", "c", "./.okareo/config.yml", "The Okareo configuration file for the evaluation run.")
-	runCmd.PersistentFlags().StringP("outputFile", "o", "", "The JSON eval report file. If specified will output eval report to file name provided.")
+	runCmd.PersistentFlags().StringP("reports", "r", "reports", "The folder where eval results are made available. Defaults to ./.okareo/reports/")
+	runCmd.PersistentFlags().StringP("outputFile", "o", "", "The eval reports folder where local json results are made available.")
 	runCmd.PersistentFlags().BoolP("debug", "d", false, "See additional stdout to debug your flows.")
 }
