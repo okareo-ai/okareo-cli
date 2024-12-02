@@ -54,8 +54,9 @@ var proxyCmd = &cobra.Command{
 		okareoApiKey := os.Getenv("OKAREO_API_KEY")
 		
 		if okareoApiKey != "" {
-			env = append(env, "OTEL_ENDPOINT=http://localhost:8000/v0/traces")
+			env = append(env, "OTEL_ENDPOINT=https://api.okareo.com/v0/traces")
 			env = append(env, "OTEL_HEADERS=api-key="+okareoApiKey)
+			env = append(env, "OTEL_EXPORTER=otlp_http")
 		}
 
 		litellmCmd.Env = env
