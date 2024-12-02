@@ -14,11 +14,35 @@ var proxyCmd = &cobra.Command{
 	Long:  `Starts a proxy server that can handle LLM requests using litellm's proxy functionality`,
 	Run: func(cmd *cobra.Command, args []string) {
 		port, _ := cmd.Flags().GetString("port")
-
-		// Install litellm if not already installed
-		installCmd := exec.Command("pip", "install", "litellm[proxy]==1.49.2")
-		installCmd.Stdout = nil
-		installCmd.Stderr = nil
+		debug, _ := cmd.Flags().GetBool("debug")
+		if debug {
+			fmt.Println("Debug mode enabled")
+			fmt.Println("Installing required packages...")
+		}
+		// Install litellm and required opentelemetry packages
+		installCmd := exec.Command("pip", "install", 
+			"litellm[proxy]==1.49.2",
+			"opentelemetry-api==1.27.0",
+			"opentelemetry-exporter-otlp==1.27.0", 
+			"opentelemetry-exporter-otlp-proto-common==1.27.0",
+			"opentelemetry-exporter-otlp-proto-grpc==1.27.0",
+			"opentelemetry-exporter-otlp-proto-http==1.27.0",
+			"opentelemetry-instrumentation==0.48b0",
+			"opentelemetry-instrumentation-asgi==0.48b0",
+			"opentelemetry-instrumentation-fastapi==0.48b0",
+			"opentelemetry-instrumentation-sqlalchemy==0.48b0",
+			"opentelemetry-proto==1.27.0",
+			"opentelemetry-sdk==1.27.0",
+			"opentelemetry-semantic-conventions==0.48b0",
+			"opentelemetry-util-http==0.48b0",
+		)
+		if debug {
+			installCmd.Stdout = os.Stdout
+			installCmd.Stderr = os.Stderr
+		} else {
+			installCmd.Stdout = os.Stdout
+			installCmd.Stderr = os.Stderr
+		}
 		if err := installCmd.Run(); err != nil {
 			fmt.Printf("Error installing litellm: %v\n", err)
 			return
