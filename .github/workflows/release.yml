@@ -6,7 +6,6 @@ on:
     branches:
       # dev branches to test workflows
       - ci-pipeline-dev
-      - workflow-test
 jobs:
   goreleaser:
     runs-on: ubuntu-latest
@@ -53,3 +52,8 @@ jobs:
           distribution: goreleaser
           version: v1.15.2
           args: release --snapshot --clean
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: binaries
+          path: dist/*.tar.gz
