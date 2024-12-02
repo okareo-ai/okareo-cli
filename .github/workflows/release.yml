@@ -6,6 +6,7 @@ on:
     branches:
       # dev branches to test workflows
       - ci-pipeline-dev
+      - workflow-test
 jobs:
   goreleaser:
     runs-on: ubuntu-latest
