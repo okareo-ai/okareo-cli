@@ -59,22 +59,40 @@ var proxyCmd = &cobra.Command{
 		}
 
 		// Get config file path relative to current directory
-		defaultConfigPath := config
+		userConfigPath := config
 		//"./cmd/proxy_config.yaml"
-		
-		// Only use default config if user hasn't provided their own
-		if len(args) == 0 {
-			// Check if default config file exists and add to args if it does
-			if _, err := os.Stat(defaultConfigPath); !os.IsNotExist(err) {
-				cmdArgs = append([]string{"--config", defaultConfigPath}, cmdArgs...)
-			}
-		} else {
-			// Use user provided config
-			cmdArgs = append([]string{"--config", args[0]}, cmdArgs...)
+		// Create a temporary config file with default settings
+		defaultConfig := []byte(`model_list:
+  - model_name: "*" 
+    litellm_params:
+      model: "*"
+litellm_settings:
+  callbacks: ["otel"]`)
+
+		tmpConfig, err := os.CreateTemp("", "proxy_config_*.yaml")
+		if err != nil {
+			return
 		}
-		
+		defer func() {
+			os.Remove(tmpConfig.Name())
+		}()
+
+		if _, err := tmpConfig.Write(defaultConfig); err != nil {
+			return
+		}
+
+		if err := tmpConfig.Close(); err != nil {
+			return
+		}
+
+		defaultConfigPath := tmpConfig.Name()
+
+		if config != "" {
+			cmdArgs = append([]string{"--config", userConfigPath}, cmdArgs...)
+		} else {
+			cmdArgs = append([]string{"--config", defaultConfigPath}, cmdArgs...)
+		}
 		litellmCmd := exec.Command("litellm", cmdArgs...)
-		
 		// Get existing env and add OTEL vars
 		env := os.Environ()
 		okareoApiKey := os.Getenv("OKAREO_API_KEY")
@@ -105,5 +123,5 @@ func init() {
 	proxyCmd.Flags().StringP("host", "H", "0.0.0.0", "Host to run the proxy server on")
 	proxyCmd.Flags().StringP("model", "m", "", "Model to use (e.g., gpt-3.5-turbo, claude-2)")
 	proxyCmd.Flags().BoolP("debug", "d", false, "Enable debug mode")
-	proxyCmd.Flags().StringP("config", "c", "./cmd/proxy_config.yaml", "Path to config file")
+	proxyCmd.Flags().StringP("config", "c", "", "Path to config file")
 }
