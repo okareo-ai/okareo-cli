@@ -24,6 +24,38 @@ var proxyCmd = &cobra.Command{
 			return
 		}
 
+		// Install dependencies needed to get litellm proxy working with OpenTelemetry
+		// At the moment, we need prisma with a postgresql database
+		libraries := []string{"prisma", "opentelemetry-api", "opentelemetry-sdk", "opentelemetry-exporter-otlp"}
+
+		// Create the command with the list of libraries
+		depInstallArgs := append([]string{"install"}, libraries...)
+		depInstallCmd := exec.Command("pip", depInstallArgs...)
+		depInstallCmd.Stdout = nil
+		depInstallCmd.Stderr = nil
+		if err := depInstallCmd.Run(); err != nil {
+			fmt.Printf("Error installing litellm dependendices: %v\n", err)
+			return
+		}
+
+		// Generate the prisma db
+		prismaGenCmd := exec.Command("prisma", "generate")
+		prismaGenCmd.Stdout = nil
+		prismaGenCmd.Stderr = nil
+		if err := prismaGenCmd.Run(); err != nil {
+			fmt.Printf("Error using 'prisma generate': %v\n", err)
+			return
+		}
+
+		// Push the prisma db
+		prismaPushCmd := exec.Command("prisma", "db", "push")
+		prismaPushCmd.Stdout = nil
+		prismaPushCmd.Stderr = nil
+		if err := prismaPushCmd.Run(); err != nil {
+			fmt.Printf("Error using 'prisma generate': %v\n", err)
+			return
+		}
+
 		// Build the litellm command
 		cmdArgs := []string{}
 		if port != "" {
@@ -52,9 +84,12 @@ var proxyCmd = &cobra.Command{
 		// Get existing env and add OTEL vars
 		env := os.Environ()
 		okareoApiKey := os.Getenv("OKAREO_API_KEY")
+		otelEndpoint := os.Getenv("OTEL_ENDPOINT")
 		
 		if okareoApiKey != "" {
-			env = append(env, "OTEL_ENDPOINT=http://localhost:8000/v0/traces")
+			if otelEndpoint == "" {
+				env = append(env, "OTEL_ENDPOINT=https://api.okareo.com/v0/traces")
+			}
 			env = append(env, "OTEL_HEADERS=api-key="+okareoApiKey)
 		}
 
