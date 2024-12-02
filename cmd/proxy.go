@@ -14,6 +14,7 @@ var proxyCmd = &cobra.Command{
 	Long:  `Starts a proxy server that can handle LLM requests using litellm's proxy functionality`,
 	Run: func(cmd *cobra.Command, args []string) {
 		port, _ := cmd.Flags().GetString("port")
+		config, _ := cmd.Flags().GetString("config")
 		debug, _ := cmd.Flags().GetBool("debug")
 		if debug {
 			fmt.Println("Debug mode enabled")
@@ -58,7 +59,8 @@ var proxyCmd = &cobra.Command{
 		}
 
 		// Get config file path relative to current directory
-		defaultConfigPath := "./cmd/proxy_config.yaml"
+		defaultConfigPath := config
+		//"./cmd/proxy_config.yaml"
 		
 		// Only use default config if user hasn't provided their own
 		if len(args) == 0 {
@@ -103,5 +105,5 @@ func init() {
 	proxyCmd.Flags().StringP("host", "H", "0.0.0.0", "Host to run the proxy server on")
 	proxyCmd.Flags().StringP("model", "m", "", "Model to use (e.g., gpt-3.5-turbo, claude-2)")
 	proxyCmd.Flags().BoolP("debug", "d", false, "Enable debug mode")
-	proxyCmd.Flags().StringP("config", "c", "", "Path to config file")
+	proxyCmd.Flags().StringP("config", "c", "./cmd/proxy_config.yaml", "Path to config file")
 }
