@@ -103,4 +103,5 @@ func init() {
 	proxyCmd.Flags().StringP("host", "H", "0.0.0.0", "Host to run the proxy server on")
 	proxyCmd.Flags().StringP("model", "m", "", "Model to use (e.g., gpt-3.5-turbo, claude-2)")
 	proxyCmd.Flags().BoolP("debug", "d", false, "Enable debug mode")
+	proxyCmd.Flags().StringP("config", "c", "", "Path to config file")
 }
