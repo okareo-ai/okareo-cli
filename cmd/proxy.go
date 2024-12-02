@@ -41,8 +41,8 @@ var proxyCmd = &cobra.Command{
 			installCmd.Stdout = os.Stdout
 			installCmd.Stderr = os.Stderr
 		} else {
-			installCmd.Stdout = os.Stdout
-			installCmd.Stderr = os.Stderr
+			installCmd.Stdout = nil
+			installCmd.Stderr = nil
 		}
 		if err := installCmd.Run(); err != nil {
 			fmt.Printf("Error installing litellm: %v\n", err)
