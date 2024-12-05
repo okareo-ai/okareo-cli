@@ -22,7 +22,7 @@ var proxyCmd = &cobra.Command{
 		}
 		// Install litellm and required opentelemetry packages
 		installCmd := exec.Command("pip", "install", 
-			"litellm[proxy]==1.49.2",
+			"litellm[proxy]==1.53.7",
 			"opentelemetry-api==1.27.0",
 			"opentelemetry-exporter-otlp==1.27.0", 
 			"opentelemetry-exporter-otlp-proto-common==1.27.0",
