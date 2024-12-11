@@ -104,8 +104,13 @@ litellm_settings:
 		}
 
 		litellmCmd.Env = env
-		litellmCmd.Stdout = nil
-		litellmCmd.Stderr = nil
+		if debug {
+			litellmCmd.Stdout = os.Stdout
+			litellmCmd.Stderr = os.Stderr
+		} else {
+			litellmCmd.Stdout = nil
+			litellmCmd.Stderr = nil
+		}
 
 		fmt.Printf("Starting proxy on port %s\n", port)
 		if err := litellmCmd.Run(); err != nil {
