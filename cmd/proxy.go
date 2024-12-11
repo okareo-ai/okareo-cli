@@ -371,16 +371,27 @@ litellm_settings:
 		// Get existing env and add OTEL vars
 		env := os.Environ()
 		okareoApiKey := os.Getenv("OKAREO_API_KEY")
-		
+
 		if okareoApiKey != "" {
 			env = append(env, "OTEL_ENDPOINT=https://api.okareo.com/v0/traces")
 			env = append(env, "OTEL_HEADERS=api-key="+okareoApiKey)
 			env = append(env, "OTEL_EXPORTER=otlp_http")
 		}
-
+		if debug {
+			fmt.Printf("OKAREO_API_KEY: %s\n", okareoApiKey)
+			fmt.Println("Current environment variables:")
+			for _, e := range env {
+				fmt.Println(e)
+			}
+		}
 		litellmCmd.Env = env
-		litellmCmd.Stdout = nil
-		litellmCmd.Stderr = nil
+		if debug {
+			litellmCmd.Stdout = os.Stdout
+			litellmCmd.Stderr = os.Stderr
+		} else {
+			litellmCmd.Stdout = nil
+			litellmCmd.Stderr = nil
+		}
 
 		fmt.Printf("Starting proxy on port %s\n", port)
 		if err := litellmCmd.Run(); err != nil {
