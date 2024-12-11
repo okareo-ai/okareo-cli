@@ -108,8 +108,6 @@ var proxyCmd = &cobra.Command{
 			"ed25519==1.5",
 			"email_validator==2.2.0",
 			"embedchain==0.1.122",
-			"en-core-web-lg==3.7.1",
-			"en-core-web-sm==3.7.1",
 			"evaluate==0.4.1",
 			"executing==2.0.1",
 			"fairseq==0.12.2",
