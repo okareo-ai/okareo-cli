@@ -1,0 +1,165 @@
+ename: Okareo Proxy test
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+jobs:
+  install-cli:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Export variable
+        run: |
+          echo "OKAREO_API_KEY=eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IjYyNDNmYWY3In0.eyJzdWIiOiI1MGJkZDk4MS1hYzFjLTRiYzAtODU2Mi1mYTM0NDZlMTQ1NGYiLCJ0eXBlIjoidGVuYW50QWNjZXNzVG9rZW4iLCJ0ZW5hbnRJZCI6IjRiMjE0NGFkLTNjYTktNDUwZi05MmNkLTQzMmRhZGYxNDgwMCIsInJvbGVzIjpbIkZFVENILVJPTEVTLUJZLUFQSSJdLCJwZXJtaXNzaW9ucyI6WyJGRVRDSC1QRVJNSVNTSU9OUy1CWS1BUEkiXSwiYXVkIjoiNjI0M2ZhZjctOTZjNi00ODE1LWI5MzMtY2VkZjlkZjViODkwIiwiaXNzIjoiaHR0cHM6Ly9hdXRoLm9rYXJlby5jb20iLCJpYXQiOjE3MDc0NDM0MzN9.jA_0wP35GatIw7OZlaF9BJ-139zZi5MgQArYFBFjRIJqZnAEj9vBTz7mAFA9Muv-JUn_sdNd8OkbUIlqRLuhCtFmw6yYs68s6Vk4xV58A0US1SL7S91ceEdMxbowXzsr--uzRF1bbLWRpa982Gg95o0YWe8UC-TdXZJuhvcf0amMO9MX1-Vu_Yd4xj-InxR2R4-4nVwj17_8EyCLfnshqMLdf9PB7zdTOVU5M3lrZwU6i2_0iAePA4xEumiF5Y5sHSQtNoqeiVM7-u_eHEnxKCMCLCePbUXVH6o05L8GrW-tKeq5uP9WErmDqbsWD95E9Tp6eI5qKBxzF2TU4-xBpA" >> $GITHUB_ENV
+      - name: Download and Install Okareo CLI
+        env:
+          OKAREO_API_KEY: ${{ secrets.OKAREO_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        shell: bash
+        run: |
+          VERSION="0.0.19"
+          FILENAME="okareo_${VERSION}_linux_amd64.tar.gz"
+          URL="https://github.com/okareo-ai/okareo-cli/releases/download/v${VERSION}/${FILENAME}"
+          
+          echo "Downloading from: $URL"
+          
+          # Create temp directory for extraction
+          TEMP_DIR=$(mktemp -d)
+          cd $TEMP_DIR
+          
+          # Download and extract
+          curl -L $URL -o cli.tar.gz
+          tar xzf cli.tar.gz
+          
+          # Move binary to /usr/local/bin
+          sudo mv bin/okareo /usr/local/bin/
+          sudo chmod +x /usr/local/bin/okareo
+          
+          # Clean up
+          cd -
+          rm -rf $TEMP_DIR
+          
+          # Verify installation
+          which okareo
+          okareo --version
+
+      - name: Start proxy server and capture output
+        env:
+          OKAREO_API_KEY: ${{ secrets.OKAREO_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OTEL_ENDPOINT: "https://api.okareo.com/v0/traces"
+          OTEL_HEADERS: "api-key=${{ secrets.OKAREO_API_KEY }}"
+          OTEL_EXPORTER: "otlp_http"
+        run: |
+          okareo proxy --debug | tee proxy_output.log &
+          PROXY_PID=$!
+          echo "Waiting for proxy server to start..."
+          sleep 10  # Increased initial wait time
+          for i in {1..240}; do  # Increased number of attempts
+            if curl -s http://localhost:4000/health; then
+              echo "Proxy server is up and running"
+              break
+            fi
+            if [ $i -eq 240 ]; then  # Adjusted to match new number of attempts
+              echo "Proxy server failed to start after 2 minutes"
+              kill $PROXY_PID
+              cat proxy_output.log
+              exit 1
+            fi
+            sleep 2
+          done
+          echo "Proxy server started successfully. Waiting an additional 30 seconds for stability..."
+          sleep 30  # Additional wait time after successful start
+  
+      - name: Health check, generate random string, and send test completion request
+        env:
+          OKAREO_API_KEY: ${{ secrets.OKAREO_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        id: test_request
+        run: |
+          # Health check
+          echo "Performing health check..."
+          for i in {1..30}; do
+            if curl -s http://localhost:4000/health; then
+              echo "Proxy server is up and running"
+              break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "Proxy server failed to start"
+              exit 1
+            fi
+            sleep 2
+          done
+
+          # Generate random string
+          RANDOM_STRING=$(openssl rand -hex 8)
+          echo "RANDOM_STRING=$RANDOM_STRING" >> $GITHUB_OUTPUT
+          
+          echo "Sending test completion request with random string: $RANDOM_STRING"
+          
+          # Send request and capture verbose output
+          curl -v http://localhost:4000/v1/chat/completions \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${{ secrets.OPENAI_API_KEY }}" \
+            -d '{
+              "model": "gpt-3.5-turbo",
+              "messages": [{"role": "user", "content": "Say '"$RANDOM_STRING"'"}]
+            }' 2> curl_verbose.log > response.json
+          
+          echo "Verbose curl output:"
+          cat curl_verbose.log
+          
+          echo "Response JSON:"
+          cat response.json
+          
+          echo "Waiting for data to propagate..."
+          sleep 30
+          echo "Proxy server output:"
+          cat proxy_output.log
+
+      - name: Verify datapoint was recorded
+        env:
+          OKAREO_API_KEY: ${{ secrets.OKAREO_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          echo "Searching for datapoint with random string: ${{ steps.test_request.outputs.RANDOM_STRING }}"
+          
+          echo "Sending request to find datapoints..."
+          RESPONSE=$(curl -v -X POST https://api.okareo.com/v0/find_datapoints \
+            -H "Content-Type: application/json" \
+            -H "api-key: ${{ secrets.OKAREO_API_KEY }}" \
+            -d '{
+              "limit": 1,
+              "search_value": "${{ steps.test_request.outputs.RANDOM_STRING }}"
+            }' 2>&1)
+          
+          echo "Curl response:"
+          echo "$RESPONSE"
+          
+          # Extract the response body (assuming it's the last line of the output)
+          RESPONSE_BODY=$(echo "$RESPONSE" | tail -n 1)
+          
+          echo "Response body:"
+          echo "$RESPONSE_BODY"
+          
+          # Check if we got any results
+          COUNT=$(echo $RESPONSE_BODY | jq '. | length')
+          echo "Number of datapoints found: $COUNT"
+          
+          if [ "$COUNT" -eq "0" ]; then
+            echo "No datapoints found!"
+            exit 1
+          fi
+          
+          echo "Found datapoint successfully!"
+          
+          # Print the found datapoint for inspection
+          echo "Found datapoint:"
+          echo "$RESPONSE_BODY" | jq '.'
+      - name: Stop proxy server
+        if: always()
+        run: |
+          pkill okareo
+          echo "Final proxy server output:"
+          cat proxy_output.log
