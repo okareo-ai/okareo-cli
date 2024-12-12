@@ -1,4 +1,4 @@
-ename: Okareo Proxy test
+name: Okareo Proxy test
 
 on:
   workflow_call:
@@ -9,9 +9,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Export variable
-        run: |
-          echo "OKAREO_API_KEY=eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IjYyNDNmYWY3In0.eyJzdWIiOiI1MGJkZDk4MS1hYzFjLTRiYzAtODU2Mi1mYTM0NDZlMTQ1NGYiLCJ0eXBlIjoidGVuYW50QWNjZXNzVG9rZW4iLCJ0ZW5hbnRJZCI6IjRiMjE0NGFkLTNjYTktNDUwZi05MmNkLTQzMmRhZGYxNDgwMCIsInJvbGVzIjpbIkZFVENILVJPTEVTLUJZLUFQSSJdLCJwZXJtaXNzaW9ucyI6WyJGRVRDSC1QRVJNSVNTSU9OUy1CWS1BUEkiXSwiYXVkIjoiNjI0M2ZhZjctOTZjNi00ODE1LWI5MzMtY2VkZjlkZjViODkwIiwiaXNzIjoiaHR0cHM6Ly9hdXRoLm9rYXJlby5jb20iLCJpYXQiOjE3MDc0NDM0MzN9.jA_0wP35GatIw7OZlaF9BJ-139zZi5MgQArYFBFjRIJqZnAEj9vBTz7mAFA9Muv-JUn_sdNd8OkbUIlqRLuhCtFmw6yYs68s6Vk4xV58A0US1SL7S91ceEdMxbowXzsr--uzRF1bbLWRpa982Gg95o0YWe8UC-TdXZJuhvcf0amMO9MX1-Vu_Yd4xj-InxR2R4-4nVwj17_8EyCLfnshqMLdf9PB7zdTOVU5M3lrZwU6i2_0iAePA4xEumiF5Y5sHSQtNoqeiVM7-u_eHEnxKCMCLCePbUXVH6o05L8GrW-tKeq5uP9WErmDqbsWD95E9Tp6eI5qKBxzF2TU4-xBpA" >> $GITHUB_ENV
       - name: Download and Install Okareo CLI
         env:
           OKAREO_API_KEY: ${{ secrets.OKAREO_API_KEY }}
