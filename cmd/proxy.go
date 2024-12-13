@@ -21,16 +21,15 @@ var proxyCmd = &cobra.Command{
 			fmt.Println("Installing required packages...")
 		}
 		// Install litellm and required opentelemetry packages
-		installCmd := exec.Command("pip", "install", 
+		installCmd := exec.Command("pip", "install",
 			"litellm[proxy]==1.53.7",
 			"opentelemetry-api==1.27.0",
-			"opentelemetry-exporter-otlp==1.27.0", 
-			"opentelemetry-exporter-otlp-proto-common==1.27.0",
+			"opentelemetry-exporter-otlp==1.27.0",
+			"opentelemetry-exporter-otlp-proto-common==1.27.0", 
 			"opentelemetry-exporter-otlp-proto-grpc==1.27.0",
 			"opentelemetry-exporter-otlp-proto-http==1.27.0",
 			"opentelemetry-instrumentation==0.48b0",
-			"opentelemetry-instrumentation-asgi==0.48b0",
-			"opentelemetry-instrumentation-fastapi==0.48b0",
+			"opentelemetry-instrumentation-asgi==0.48b0", 
 			"opentelemetry-instrumentation-sqlalchemy==0.48b0",
 			"opentelemetry-proto==1.27.0",
 			"opentelemetry-sdk==1.27.0",
@@ -96,13 +95,17 @@ litellm_settings:
 		// Get existing env and add OTEL vars
 		env := os.Environ()
 		okareoApiKey := os.Getenv("OKAREO_API_KEY")
-		
+		dev, _ := cmd.Flags().GetBool("dev")
+
 		if okareoApiKey != "" {
-			env = append(env, "OTEL_ENDPOINT=https://api.okareo.com/v0/traces")
+			if dev {
+				env = append(env, "OTEL_ENDPOINT=http://localhost:8000/v0/traces")
+			} else {
+				env = append(env, "OTEL_ENDPOINT=https://api.okareo.com/v0/traces")
+			}
 			env = append(env, "OTEL_HEADERS=api-key="+okareoApiKey)
 			env = append(env, "OTEL_EXPORTER=otlp_http")
 		}
-
 		litellmCmd.Env = env
 		if debug {
 			litellmCmd.Stdout = os.Stdout
@@ -128,5 +131,6 @@ func init() {
 	proxyCmd.Flags().StringP("host", "H", "0.0.0.0", "Host to run the proxy server on")
 	proxyCmd.Flags().StringP("model", "m", "", "Model to use (e.g., gpt-3.5-turbo, claude-2)")
 	proxyCmd.Flags().BoolP("debug", "d", false, "Enable debug mode")
+	proxyCmd.Flags().BoolP("dev", "", false, "Use local development endpoint for traces")
 	proxyCmd.Flags().StringP("config", "c", "", "Path to config file")
 }
