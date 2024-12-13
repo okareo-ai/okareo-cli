@@ -24,7 +24,6 @@ jobs:
           cd $TEMP_DIR
           
           # Extract
-          mv ../cli.tar.gz ./
           tar xzf cli.tar.gz
           
           # Move binary to /usr/local/bin
