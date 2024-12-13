@@ -15,16 +15,16 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         shell: bash
         run: |
-          # Download latest release directly
-          echo "Downloading latest release..."
-          curl -L -o cli.tar.gz "https://github.com/okareo-ai/okareo-cli/releases/latest/download/okareo_linux_amd64.tar.gz"
-          
           # Create temp directory for extraction
           TEMP_DIR=$(mktemp -d)
           cd $TEMP_DIR
           
+          # Download latest release directly
+          echo "Downloading latest release..."
+          curl -LO "https://github.com/okareo-ai/okareo-cli/releases/latest/download/okareo_linux_amd64.tar.gz"
+          
           # Extract
-          tar xzf cli.tar.gz
+          tar xzf okareo_linux_amd64.tar.gz
           
           # Move binary to /usr/local/bin
           sudo mv bin/okareo /usr/local/bin/
