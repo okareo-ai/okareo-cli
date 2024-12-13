@@ -15,10 +15,12 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         shell: bash
         run: |
-          VERSION="0.0.19"
+          # Fetch latest release version from GitHub API
+          VERSION=$(curl -s https://api.github.com/repos/okareo-ai/okareo-cli/releases/latest | jq -r .tag_name | sed 's/^v//')
           FILENAME="okareo_${VERSION}_linux_amd64.tar.gz"
           URL="https://github.com/okareo-ai/okareo-cli/releases/download/v${VERSION}/${FILENAME}"
           
+          echo "Using latest version: ${VERSION}"
           echo "Downloading from: $URL"
           
           # Create temp directory for extraction
