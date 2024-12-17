@@ -7,7 +7,22 @@ import (
 
 	"github.com/spf13/cobra"
 )
+func isPythonInstalled() bool {
+    cmd := exec.Command("python", "--version")
+    return cmd.Run() == nil
+}
 
+func isPipInstalled() bool {
+    cmd := exec.Command("pip", "--version")
+    return cmd.Run() == nil
+}
+
+func promptPythonInstallation() {
+    fmt.Println("Python is not installed. Please install Python 3.7 or later.")
+    fmt.Println("Visit https://www.python.org/downloads/ for installation instructions.")
+    fmt.Println("After installing Python, please run this command again.")
+    os.Exit(1)
+}
 var proxyCmd = &cobra.Command{
 	Use:   "proxy",
 	Short: "Start a proxy server using litellm",
@@ -16,8 +31,40 @@ var proxyCmd = &cobra.Command{
 		port, _ := cmd.Flags().GetString("port")
 		config, _ := cmd.Flags().GetString("config")
 		debug, _ := cmd.Flags().GetBool("debug")
+
 		if debug {
 			fmt.Println("Debug mode enabled")
+			fmt.Println("Checking for Python and pip...")
+		}
+	
+		if !isPythonInstalled() {
+			fmt.Println("Python is not installed.")
+			promptPythonInstallation()
+			return
+		} else {
+			if debug {
+				fmt.Println("Python is installed")
+			}
+		}
+	
+		if !isPipInstalled() {
+			if debug {
+				fmt.Println("pip not found. Attempting to install...")
+			}
+			installCmd := exec.Command("python", "-m", "ensurepip", "--upgrade")
+			if err := installCmd.Run(); err != nil {
+				fmt.Printf("Error installing pip: %v\n", err)
+				fmt.Println("Please install pip manually and try again.")
+				return
+			}
+			if debug {
+				fmt.Println("pip installed successfully")
+			}
+		} else if debug {
+			fmt.Println("pip is already installed")
+		}
+
+		if debug {
 			fmt.Println("Installing required packages...")
 		}
 		// Install litellm and required opentelemetry packages
