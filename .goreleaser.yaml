@@ -20,3 +20,7 @@ archives:
     wrap_in_directory: false
     files:
       - none*
+release:
+  extra_files:
+    - glob: README.md
+    - glob: LICENSE
