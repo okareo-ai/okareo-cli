@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-
+	"strings"
 	"github.com/spf13/cobra"
 )
 func isPythonInstalled() bool {
@@ -141,6 +141,13 @@ litellm_settings:
 		litellmCmd := exec.Command("litellm", cmdArgs...)
 		// Get existing env and add OTEL vars
 		env := os.Environ()
+		filteredEnv := make([]string, 0, len(env))
+        for _, e := range env {
+            if !strings.HasPrefix(e, "DATABASE_URL=") {
+                filteredEnv = append(filteredEnv, e)
+            }
+        }
+        env = filteredEnv
 		okareoApiKey := os.Getenv("OKAREO_API_KEY")
 		dev, _ := cmd.Flags().GetBool("dev")
 
