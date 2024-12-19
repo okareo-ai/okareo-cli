@@ -1,7 +1,8 @@
 # okareo config
 project_name: okareo
 builds:
-  - binary: bin/okareo
+  - binary: okareo  # removed the bin/ prefix
+    id: okareo
 
 archives:
   - format: binary
