@@ -1,9 +1,12 @@
 # okareo config
 project_name: okareo
 builds:
-  - binary: okareo  # removed the bin/ prefix
+  - binary: okareo
     id: okareo
 
 archives:
   - format: binary
     name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
+    wrap_in_directory: false  # This prevents the creation of directories
+    files:
+      - none*
