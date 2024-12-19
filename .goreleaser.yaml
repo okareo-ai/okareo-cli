@@ -1,7 +1,7 @@
 # okareo config
 project_name: okareo
 builds:
-  - binary: okareo
+  - binary: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
     id: okareo
     dir: .
     no_unique_dist_dir: true
@@ -17,6 +17,6 @@ builds:
 archives:
   - format: binary
     name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
-    wrap_in_directory: false  # This prevents the creation of directories
+    wrap_in_directory: false
     files:
       - none*
