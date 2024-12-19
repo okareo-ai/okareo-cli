@@ -21,7 +21,7 @@ To use the CLI, refer to the docs: https://docs.okareo.com/docs/sdk/cli`,
 	Run: func(cmd *cobra.Command, args []string) {
 		vFull, _ := cmd.Flags().GetBool("version")
 		if vFull {
-			fmt.Println("v0.0.20")
+			fmt.Println("v0.0.21")
 		}
 	},
 }
