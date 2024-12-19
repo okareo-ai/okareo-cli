@@ -59,4 +59,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: binaries
-          path: dist/*.tar.gz
+          path: dist/*
