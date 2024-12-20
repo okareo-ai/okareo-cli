@@ -20,6 +20,8 @@ archives:
     wrap_in_directory: false
     files:
       - none*
+    mode: 0755    # Add this line to set executable permissions
+
 release:
   extra_files:
     - glob: README.md
