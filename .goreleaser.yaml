@@ -13,6 +13,9 @@ builds:
       - linux_arm64
       - windows_amd64
       - windows_arm64
+    hooks:
+      post: |
+        chmod +x {{ .Path }}
 
 archives:
   - format: binary
