@@ -1,10 +1,10 @@
 # okareo config
 project_name: okareo
 builds:
-  - binary: "okareo"
+  - binary: "okareo"  # Simple name without OS/arch
     id: okareo
     dir: .
-    no_unique_dist_dir: true
+    no_unique_dist_dir: false  # Changed to true to ensure proper separation of builds
     mod_timestamp: '{{ .CommitTimestamp }}'
     targets:
       - darwin_amd64
@@ -18,9 +18,9 @@ builds:
         chmod +x {{ .Path }}
 
 archives:
-  - format: tar.gz    # Changed from binary to tar.gz
+  - format: tar.gz
     name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
-    wrap_in_directory: false    # This ensures no folder inside the tar
+    wrap_in_directory: false
     files:
       - none*
 
