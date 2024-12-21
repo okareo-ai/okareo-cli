@@ -5,7 +5,7 @@
 A tool for interacting with the Okareo API
 
 ## USAGE
-1. Download okareo from dist
+1. Download and unzip okareo from dist
 2. Add okareo to your PATH (export PATH=$PATH:/correct/location/to/okareo)
 3. In your repo, add a .okareo folder
 4. Add .okareo/config.yml
