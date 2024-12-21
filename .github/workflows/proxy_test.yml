@@ -16,12 +16,18 @@ jobs:
         shell: bash
         run: |
           # Direct download of binary using the new URL format
-          URL="https://github.com/okareo-ai/okareo-cli/releases/latest/download/okareo_linux_amd64"
+          URL="https://github.com/okareo-ai/okareo-cli/releases/latest/download/okareo_linux_amd64.tar.gz"
           
           echo "Downloading from: $URL"
           
-          # Download directly to /usr/local/bin
-          sudo curl -L $URL -o /usr/local/bin/okareo
+          # Download tar.gz file
+          curl -L $URL -o okareo.tar.gz
+          
+          # Extract the binary
+          tar xvf okareo.tar.gz
+          
+          # Move binary to /usr/local/bin and set permissions
+          sudo mv okareo /usr/local/bin/
           sudo chmod +x /usr/local/bin/okareo
           
           # Verify installation
