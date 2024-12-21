@@ -55,10 +55,6 @@ jobs:
           distribution: goreleaser
           version: v1.15.2
           args: release --snapshot --clean
-      - name: Make binaries executable
-        run: |
-          chmod +x dist/okareo_linux*
-          chmod +x dist/okareo_darwin*
       # - name: Upload artifacts
       #   uses: actions/upload-artifact@v4
       #   with:

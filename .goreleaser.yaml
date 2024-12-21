@@ -1,7 +1,7 @@
 # okareo config
 project_name: okareo
 builds:
-  - binary: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
+  - binary: "okareo"
     id: okareo
     dir: .
     no_unique_dist_dir: true
@@ -18,9 +18,9 @@ builds:
         chmod +x {{ .Path }}
 
 archives:
-  - format: binary
+  - format: tar.gz    # Changed from binary to tar.gz
     name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
-    wrap_in_directory: false
+    wrap_in_directory: false    # This ensures no folder inside the tar
     files:
       - none*
 
