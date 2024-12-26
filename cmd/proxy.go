@@ -34,35 +34,8 @@ var proxyCmd = &cobra.Command{
 
 		if debug {
 			fmt.Println("Debug mode enabled")
-			fmt.Println("Checking for Python and pip...")
 		}
 	
-		if !isPythonInstalled() {
-			fmt.Println("Python is not installed.")
-			promptPythonInstallation()
-			return
-		} else {
-			if debug {
-				fmt.Println("Python is installed")
-			}
-		}
-	
-		if !isPipInstalled() {
-			if debug {
-				fmt.Println("pip not found. Attempting to install...")
-			}
-			installCmd := exec.Command("python", "-m", "ensurepip", "--upgrade")
-			if err := installCmd.Run(); err != nil {
-				fmt.Printf("Error installing pip: %v\n", err)
-				fmt.Println("Please install pip manually and try again.")
-				return
-			}
-			if debug {
-				fmt.Println("pip installed successfully")
-			}
-		} else if debug {
-			fmt.Println("pip is already installed")
-		}
 
 		if debug {
 			fmt.Println("Installing required packages...")
