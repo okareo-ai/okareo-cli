@@ -86,7 +86,9 @@ var proxyCmd = &cobra.Command{
     litellm_params:
       model: "*"
 litellm_settings:
-  callbacks: ["otel"]`)
+  callbacks: ["otel"]
+general_settings:
+  use_client_credentials_pass_through_routes: true`)
 
 		tmpConfig, err := os.CreateTemp("", "proxy_config_*.yaml")
 		if err != nil {
