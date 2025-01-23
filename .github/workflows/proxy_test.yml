@@ -24,6 +24,7 @@ jobs:
           # Send request and capture verbose output
           curl -v https://okareo-proxy-768891540670.us-central1.run.app/v1/chat/completions \
             -H "Content-Type: application/json" \
+            -H "api-key: ${{ secrets.OKAREO_API_KEY }}" \
             -H "Authorization: Bearer ${{ secrets.OPENAI_API_KEY }}" \
             -d '{
               "model": "gpt-3.5-turbo",
