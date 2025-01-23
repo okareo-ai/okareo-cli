@@ -9,12 +9,79 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Test proxy with random string
+      - name: Download and Install Okareo CLI
+        env:
+          OKAREO_API_KEY: ${{ secrets.OKAREO_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        shell: bash
+        run: |
+          # Direct download of binary using the new URL format
+          URL="https://github.com/okareo-ai/okareo-cli/releases/latest/download/okareo_linux_amd64.tar.gz"
+          
+          echo "Downloading from: $URL"
+          
+          # Download tar.gz file
+          curl -L $URL -o okareo.tar.gz
+          
+          # Extract the binary
+          tar xvf okareo.tar.gz
+          
+          # Move binary to /usr/local/bin and set permissions
+          sudo mv okareo /usr/local/bin/
+          sudo chmod +x /usr/local/bin/okareo
+          
+          # Verify installation
+          which okareo
+          okareo --version
+
+      - name: Start proxy server and capture output
+        env:
+          OKAREO_API_KEY: ${{ secrets.OKAREO_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OTEL_ENDPOINT: "https://api.okareo.com/v0/traces"
+          OTEL_HEADERS: "api-key=${{ secrets.OKAREO_API_KEY }}"
+          OTEL_EXPORTER: "otlp_http"
+        run: |
+          okareo proxy --debug | tee proxy_output.log &
+          PROXY_PID=$!
+          echo "Waiting for proxy server to start..."
+          sleep 10  # Increased initial wait time
+          for i in {1..240}; do  # Increased number of attempts
+            if curl -s http://localhost:4000/health; then
+              echo "Proxy server is up and running"
+              break
+            fi
+            if [ $i -eq 240 ]; then  # Adjusted to match new number of attempts
+              echo "Proxy server failed to start after 2 minutes"
+              kill $PROXY_PID
+              cat proxy_output.log
+              exit 1
+            fi
+            sleep 2
+          done
+          echo "Proxy server started successfully. Waiting an additional 30 seconds for stability..."
+          sleep 30  # Additional wait time after successful start
+  
+      - name: Health check, generate random string, and send test completion request
         env:
           OKAREO_API_KEY: ${{ secrets.OKAREO_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         id: test_request
         run: |
+          # Health check
+          echo "Performing health check..."
+          for i in {1..30}; do
+            if curl -s http://localhost:4000/health; then
+              echo "Proxy server is up and running"
+              break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "Proxy server failed to start"
+              exit 1
+            fi
+            sleep 2
+          done
+
           # Generate random string
           RANDOM_STRING=$(openssl rand -hex 8)
           echo "RANDOM_STRING=$RANDOM_STRING" >> $GITHUB_OUTPUT
@@ -22,9 +89,8 @@ jobs:
           echo "Sending test completion request with random string: $RANDOM_STRING"
           
           # Send request and capture verbose output
-          curl -v https://okareo-proxy-768891540670.us-central1.run.app/v1/chat/completions \
+          curl -v http://localhost:4000/v1/chat/completions \
             -H "Content-Type: application/json" \
-            -H "api-key: ${{ secrets.OKAREO_API_KEY }}" \
             -H "Authorization: Bearer ${{ secrets.OPENAI_API_KEY }}" \
             -d '{
               "model": "gpt-3.5-turbo",
@@ -39,6 +105,8 @@ jobs:
           
           echo "Waiting for data to propagate..."
           sleep 30
+          echo "Proxy server output:"
+          cat proxy_output.log
 
       - name: Verify datapoint was recorded
         env:
