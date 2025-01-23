@@ -1,0 +1,81 @@
+name: Okareo Proxy test
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+jobs:
+  install-cli:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Test proxy with random string
+        env:
+          OKAREO_API_KEY: ${{ secrets.OKAREO_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        id: test_request
+        run: |
+          # Generate random string
+          RANDOM_STRING=$(openssl rand -hex 8)
+          echo "RANDOM_STRING=$RANDOM_STRING" >> $GITHUB_OUTPUT
+          
+          echo "Sending test completion request with random string: $RANDOM_STRING"
+          
+          # Send request and capture verbose output
+          curl -v https://okareo-proxy-768891540670.us-central1.run.app/v1/chat/completions \
+            -H "Content-Type: application/json" \
+            -H "api-key: ${{ secrets.OKAREO_API_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.OPENAI_API_KEY }}" \
+            -d '{
+              "model": "gpt-3.5-turbo",
+              "messages": [{"role": "user", "content": "Say '"$RANDOM_STRING"'"}]
+            }' 2> curl_verbose.log > response.json
+          
+          echo "Verbose curl output:"
+          cat curl_verbose.log
+          
+          echo "Response JSON:"
+          cat response.json
+          
+          echo "Waiting for data to propagate..."
+          sleep 30
+
+      - name: Verify datapoint was recorded
+        env:
+          OKAREO_API_KEY: ${{ secrets.OKAREO_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          echo "Searching for datapoint with random string: ${{ steps.test_request.outputs.RANDOM_STRING }}"
+          
+          echo "Sending request to find datapoints..."
+          RESPONSE=$(curl -v -X POST https://api.okareo.com/v0/find_datapoints \
+            -H "Content-Type: application/json" \
+            -H "api-key: ${{ secrets.OKAREO_API_KEY }}" \
+            -d '{
+              "limit": 1,
+              "search_value": "${{ steps.test_request.outputs.RANDOM_STRING }}"
+            }' 2>&1)
+          
+          echo "Curl response:"
+          echo "$RESPONSE"
+          
+          # Extract the response body (assuming it's the last line of the output)
+          RESPONSE_BODY=$(echo "$RESPONSE" | tail -n 1)
+          
+          echo "Response body:"
+          echo "$RESPONSE_BODY"
+          
+          # Check if we got any results
+          COUNT=$(echo $RESPONSE_BODY | jq '. | length')
+          echo "Number of datapoints found: $COUNT"
+          
+          if [ "$COUNT" -eq "0" ]; then
+            echo "No datapoints found!"
+            exit 1
+          fi
+          
+          echo "Found datapoint successfully!"
+          
+          # Print the found datapoint for inspection
+          echo "Found datapoint:"
+          echo "$RESPONSE_BODY" | jq '.'
