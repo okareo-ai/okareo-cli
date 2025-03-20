@@ -25,8 +25,8 @@ func promptPythonInstallation() {
 }
 var proxyCmd = &cobra.Command{
 	Use:   "proxy",
-	Short: "Start a proxy server using litellm",
-	Long:  `Starts a proxy server that can handle LLM requests using litellm's proxy functionality`,
+	Short: "Start a proxy server",
+	Long:  `Starts a proxy server that can handle LLM requests`,
 	Run: func(cmd *cobra.Command, args []string) {
 		port, _ := cmd.Flags().GetString("port")
 		config, _ := cmd.Flags().GetString("config")
