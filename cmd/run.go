@@ -522,8 +522,8 @@ func doPythonScript(filename string, okareoAPIKey string, projectId string, run_
 
 	// Setup the environment for the caller
 	cmd.Env = os.Environ()
+	cmd.Env = append(cmd.Env, "OKAREO_BASE_URL="+get_endpoint())
 	if isDebug {
-		cmd.Env = append(cmd.Env, "OKAREO_BASE_URL="+get_endpoint())
 		fmt.Print("Using Endpoint "+get_endpoint()+"\n")
 	}
 	if okareoAPIKey != "" {
@@ -733,8 +733,8 @@ func doJSScript(filename string, okareoAPIKey string, projectId string, run_name
 	// Setup the environment for the caller
 	cmd.Env = os.Environ()
 
+	cmd.Env = append(cmd.Env, "OKAREO_BASE_URL="+get_endpoint())
 	if isDebug {
-		cmd.Env = append(cmd.Env, "OKAREO_BASE_URL="+get_endpoint())
 		fmt.Print("Using Endpoint "+get_endpoint()+"\n")
 	}
 	if run_name != "" {
